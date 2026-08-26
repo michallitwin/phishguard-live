@@ -1,0 +1,59 @@
+from pathlib import Path
+
+import joblib
+import numpy as np
+
+from src.features.extractor import extract_features
+
+MODEL_PATH = Path("models/phishing_model.joblib")
+ENCODER_PATH = Path("models/label_encoder.joblib")
+
+FEATURE_COLUMNS = [
+    "length",
+    "digits",
+    "hyphens",
+    "brand_sim",
+    "suspicious_tld",
+    "keywords",
+]
+
+
+def load_artifacts() -> tuple:
+    model = joblib.load(MODEL_PATH)
+    le = joblib.load(ENCODER_PATH)
+    return model, le
+
+
+def score_domain(domain: str, model, le) -> dict:
+    features = extract_features(domain)
+    X = np.array([[features[col] for col in FEATURE_COLUMNS]])
+    prediction = model.predict(X)
+    probabilities = model.predict_proba(X)
+
+    label = le.inverse_transform(prediction)[0]
+    phishing_proba = probabilities[0][1]
+
+    return {
+        "domain": domain,
+        "prediction": label,
+        "phishing_probability": round(float(phishing_proba), 3),
+    }
+
+
+if __name__ == "__main__":
+    model, le = load_artifacts()
+
+    test_domains = [
+        "paypal.com",
+        "paypal-verify-login-secure.tk",
+        "google.com",
+        "gooogle-account-update.xyz",
+        "wikipedia.org",
+        "abc.dup",
+        "scam.xyz",
+        "adasddsssddsadadddasddsadsads.ok"
+    ]
+
+    for domain in test_domains:
+        result = score_domain(domain, model, le)
+        print(result)
