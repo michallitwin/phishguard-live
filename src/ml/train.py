@@ -7,6 +7,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
+import numpy as np
+from sklearn.metrics import f1_score
+
 
 
 DATASET_PATH = Path("data/processed/dataset.csv")
@@ -34,10 +37,28 @@ def get_candidate_models() -> dict:
     }
 
 
+def evaluate_baseline(X: np.ndarray, y: np.ndarray) -> dict:
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    models = get_candidate_models()
+    results = {}
+
+    for name, model in models.items():
+        model.fit(X_train_scaled, y_train)
+        y_pred = model.predict(X_test_scaled)
+        score = f1_score(y_test, y_pred)
+        results[name] = score
+        print(f"{name} F1(phishing) = {score:.3f}")
+
+    return results
+
+
+
 if __name__ == "__main__":
     X, y, le = load_data()
     print("Classes:", dict(zip(le.classes_, le.transform(le.classes_))))
     print("X shape:", X.shape)
 
-    models = get_candidate_models()
-    print("Models:", list(models.keys()))
+    baseline_results = evaluate_baseline(X, y)
