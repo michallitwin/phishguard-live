@@ -32,3 +32,4 @@ def get_candidate_models() -> dict:
         "Gradient Boosting": GradientBoostingClassifier(random_state=RANDOM_STATE),
         "SVM": SVC(class_weight="balanced", probability=True, random_state=RANDOM_STATE),
     }
+
