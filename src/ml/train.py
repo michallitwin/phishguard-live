@@ -111,12 +111,7 @@ if __name__ == "__main__":
     print("Classes:", dict(zip(le.classes_, le.transform(le.classes_))))
     print("X shape:", X.shape)
 
-<<<<<<< HEAD
-    models = get_candidate_models()
-    print("Models:", list(models.keys()))
-=======
     baseline_results = evaluate_baseline(X, y)
     best_grid = tune_best_model(X, y)
     final_evaluation(best_grid, X, y)
     save_model(best_grid, le)
->>>>>>> main
