@@ -33,3 +33,11 @@ def get_candidate_models() -> dict:
         "SVM": SVC(class_weight="balanced", probability=True, random_state=RANDOM_STATE),
     }
 
+
+if __name__ == "__main__":
+    X, y, le = load_data()
+    print("Classes:", dict(zip(le.classes_, le.transform(le.classes_))))
+    print("X shape:", X.shape)
+
+    models = get_candidate_models()
+    print("Models:", list(models.keys()))
