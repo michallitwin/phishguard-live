@@ -1,4 +1,6 @@
 .venv/
 __pycache__/
-*.pycdata/raw/
+*.pyc
+data/raw/
 data/processed/
+models/*.joblib
