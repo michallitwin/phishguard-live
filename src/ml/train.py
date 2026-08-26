@@ -9,6 +9,8 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
 import numpy as np
 from sklearn.metrics import f1_score
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
 
 
 
@@ -55,6 +57,54 @@ def evaluate_baseline(X: np.ndarray, y: np.ndarray) -> dict:
     return results
 
 
+def tune_best_model(X: np.ndarray, y: np.ndarray) -> GridSearchCV:
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+
+    param_grid = {
+        "n_estimators": [100, 200, 300],
+        "max_depth": [2, 3, 4, 5],
+        "learning_rate": [0.05, 0.1, 0.2],
+    }
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+
+    grid = GridSearchCV(
+        GradientBoostingClassifier(random_state=RANDOM_STATE),
+        param_grid=param_grid,
+        scoring="f1",
+        cv=cv,
+        n_jobs=-1,
+    )
+
+    grid.fit(X_train, y_train)
+
+    print("Best params:", grid.best_params_)
+    print("Best F1 (cross-validated):", round(grid.best_score_, 3))
+
+    return grid
+
+def final_evaluation(grid: GridSearchCV, X: np.ndarray, y: np.ndarray) -> None:
+    _, X_test, _, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
+)
+
+    best_model = grid.best_estimator_
+    y_pred = best_model.predict(X_test)
+    y_proba = best_model.predict_proba(X_test)[:, 1]
+
+    print("\n--- Final evaluation on held-out test set ---")
+    print(classification_report(y_test, y_pred, target_names=["legit", "phishing"]))
+    print("ROC-AUC:", round(roc_auc_score(y_test, y_proba), 3))
+    print("Confusion matrix:")
+    print(confusion_matrix(y_test, y_pred))
+
+def save_model(grid: GridSearchCV, le: LabelEncoder) -> None:
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(grid.best_estimator_, MODEL_PATH)
+    joblib.dump(le, MODEL_PATH.parent / "label_encoder.joblib")
+    print(f"\nModel saved to {MODEL_PATH}")
 
 if __name__ == "__main__":
     X, y, le = load_data()
@@ -62,3 +112,6 @@ if __name__ == "__main__":
     print("X shape:", X.shape)
 
     baseline_results = evaluate_baseline(X, y)
+    best_grid = tune_best_model(X, y)
+    final_evaluation(best_grid, X, y)
+    save_model(best_grid, le)
