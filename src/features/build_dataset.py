@@ -13,6 +13,16 @@ LEGIT_SAMPLE_SIZE = 2000
 
 
 def build_labeled_rows(domains: set[str], label: str) -> list[dict]:
+    """
+    Extracts features for a set of domains and assigns a specific label.
+
+    Args:
+        domains (set[str]): A collection of domain names to process.
+        label (str): The classification label (e.g., 'legit' or 'phishing').
+
+    Returns:
+        list[dict]: A list of dictionaries containing domain features, the domain itself, and its label.
+    """
     rows = []
     for domain in domains:
         features = extract_features(domain)
@@ -23,6 +33,12 @@ def build_labeled_rows(domains: set[str], label: str) -> list[dict]:
 
 
 def build_dataset() -> pd.DataFrame:
+    """
+    Builds a dataset by combining fetched phishing domains and sampled legitimate domains.
+
+    Returns:
+        pd.DataFrame: A shuffled DataFrame containing features and labels for all domains.
+    """
     phishing_domains = fetch_phishing_domains()
     tranco_domains = load_tranco_domains()
     
@@ -39,6 +55,12 @@ def build_dataset() -> pd.DataFrame:
 
 
 def save_dataset(df: pd.DataFrame) -> None:
+    """
+    Saves the processed dataset to a CSV file.
+
+    Args:
+        df (pd.DataFrame): The dataset to save.
+    """
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUTPUT_PATH, index=False)
 

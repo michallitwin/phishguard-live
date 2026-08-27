@@ -23,6 +23,12 @@ RANDOM_STATE = 42
 
 
 def load_data() -> tuple:
+    """
+    Loads the dataset, extracts features, and encodes target labels.
+
+    Returns:
+        tuple: Feature matrix (X), encoded labels (y), and fitted LabelEncoder (le).
+    """
     df = pd.read_csv(DATASET_PATH)
     X = df[FEATURE_COLUMNS].values
     le = LabelEncoder()
@@ -31,6 +37,12 @@ def load_data() -> tuple:
 
 
 def get_candidate_models() -> dict:
+    """
+    Initializes candidate machine learning models for baseline evaluation.
+
+    Returns:
+        dict: Dictionary of instantiated scikit-learn models.
+    """
     return {
         "Logistic Regression": LogisticRegression(class_weight="balanced", max_iter=1000, random_state=RANDOM_STATE),
         "Random Forest": RandomForestClassifier(class_weight="balanced", random_state=RANDOM_STATE),
@@ -40,6 +52,16 @@ def get_candidate_models() -> dict:
 
 
 def evaluate_baseline(X: np.ndarray, y: np.ndarray) -> dict:
+    """
+    Evaluates candidate models on scaled data using the F1 score.
+
+    Args:
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray): Target labels.
+
+    Returns:
+        dict: Dictionary mapping model names to their F1 scores.
+    """
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -58,7 +80,16 @@ def evaluate_baseline(X: np.ndarray, y: np.ndarray) -> dict:
 
 
 def tune_best_model(X: np.ndarray, y: np.ndarray) -> GridSearchCV:
+    """
+    Performs hyperparameter tuning for GradientBoosting using GridSearchCV.
 
+    Args:
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray): Target labels.
+
+    Returns:
+        GridSearchCV: Fitted grid search object containing the best model.
+    """
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
 
@@ -86,6 +117,14 @@ def tune_best_model(X: np.ndarray, y: np.ndarray) -> GridSearchCV:
     return grid
 
 def final_evaluation(grid: GridSearchCV, X: np.ndarray, y: np.ndarray) -> None:
+    """
+    Evaluates the best tuned model on a held-out test set.
+
+    Args:
+        grid (GridSearchCV): Fitted grid search object.
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray): Target labels.
+    """
     _, X_test, _, y_test = train_test_split(
         X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
 )
@@ -101,6 +140,13 @@ def final_evaluation(grid: GridSearchCV, X: np.ndarray, y: np.ndarray) -> None:
     print(confusion_matrix(y_test, y_pred))
 
 def save_model(grid: GridSearchCV, le: LabelEncoder) -> None:
+    """
+    Saves the best estimator and label encoder to disk as .joblib files.
+
+    Args:
+        grid (GridSearchCV): Fitted grid search object.
+        le (LabelEncoder): Fitted label encoder.
+    """
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(grid.best_estimator_, MODEL_PATH)
     joblib.dump(le, MODEL_PATH.parent / "label_encoder.joblib")

@@ -8,7 +8,17 @@ MONITORED_BRANDS = ["paypal", "allegro", "inpost", "santander", "google"]
 def query_crtsh(
     search_term: str, retries: int = 3, timeout: int = 60
 ) -> list[dict]:
-    """Queries crt.sh with automatic retry logic on timeout or server errors."""
+    """
+    Queries crt.sh with automatic retry logic on timeout or server errors.
+    
+    Args:
+        search_term (str): The domain or wildcard string to search for (e.g., '%.inpost.pl').
+        retries (int, optional): Number of retry attempts. Defaults to 3.
+        timeout (int, optional): Request timeout in seconds. Defaults to 60.
+        
+    Returns:
+        list[dict]: A list of dictionaries containing certificate records, or an empty list if all retries fail.
+    """
     params = {"q": search_term, "output": "json"}
     
     headers = {

@@ -19,12 +19,29 @@ FEATURE_COLUMNS = [
 
 
 def load_artifacts() -> tuple:
+    """
+    Loads the trained model and label encoder from disk.
+    
+    Returns:
+        tuple: The loaded model and label encoder.
+    """
     model = joblib.load(MODEL_PATH)
     le = joblib.load(ENCODER_PATH)
     return model, le
 
 
 def score_domain(domain: str, model, le) -> dict:
+    """
+    Extracts features from a domain and predicts its phishing probability.
+    
+    Args:
+        domain (str): The domain name to evaluate.
+        model: The trained machine learning model.
+        le: The trained label encoder.
+        
+    Returns:
+        dict: A dictionary containing the domain, predicted label, and phishing probability.
+    """
     features = extract_features(domain)
     X = np.array([[features[col] for col in FEATURE_COLUMNS]])
     prediction = model.predict(X)

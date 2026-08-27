@@ -10,6 +10,12 @@ CACHE_PATH = Path("data/raw/tranco_top1m.csv")
 
 
 def download_tranco_list() -> pd.DataFrame:
+    """
+    Downloads the latest Tranco top 1 million domains list and extracts it from the ZIP archive.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing 'rank' and 'domain' columns.
+    """
     response = requests.get(TRANCO_URL, timeout=15)
     response.raise_for_status()
 
@@ -22,6 +28,15 @@ def download_tranco_list() -> pd.DataFrame:
     return df
 
 def load_tranco_domains(force_refresh: bool = False) -> set[str]:
+    """
+    Loads the Tranco domain list from a local cache or downloads it if missing.
+
+    Args:
+        force_refresh (bool, optional): If True, forces a fresh download ignoring the cache. Defaults to False.
+
+    Returns:
+        set[str]: A set of unique legitimate domains.
+    """
     if CACHE_PATH.exists() and not force_refresh:
         df = pd.read_csv(CACHE_PATH)
     else:
