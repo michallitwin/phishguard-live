@@ -1,9 +1,9 @@
 [project]
 name = "phishguard-live"
 version = "0.1.0"
-description = "Add your description here"
+description = "Phishing domain detection system"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.141.1",
     "levenshtein>=0.27.4",
@@ -20,4 +20,9 @@ dependencies = [
 dev = [
     "ipykernel>=7.3.0",
     "jupyter>=1.1.1",
+    "pytest>=9.1.1",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
