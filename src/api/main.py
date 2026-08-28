@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from src.api.schemas import DomainRequest, ScoreResponse, HealthResponse
 from src.ml.predict import load_artifacts, score_domain
+import uvicorn
 
 
 app = FastAPI(
@@ -14,7 +15,11 @@ model, le = load_artifacts()
 
 @app.get("/health", response_model=HealthResponse)
 def healthy() -> dict:
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "model_loaded": model is not None and le is not None,
+        }
+
 
 @app.post("/api/score", response_model=ScoreResponse)
 def score(request: DomainRequest) -> dict:
@@ -23,5 +28,4 @@ def score(request: DomainRequest) -> dict:
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
