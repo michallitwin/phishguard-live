@@ -25,3 +25,4 @@ def test_extract_features():
     assert isinstance(features, dict)
     assert features["suspicious_tld"] == 1
     assert features["keywords"] >= 1
+    

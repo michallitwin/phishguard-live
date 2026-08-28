@@ -50,3 +50,4 @@ if __name__ == "__main__":
     print(f"Downloaded {len(domains)} unique phishing domains")
     for d in list(domains)[:10]:
         print(" -", d)
+        

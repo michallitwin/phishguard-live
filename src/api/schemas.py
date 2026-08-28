@@ -26,3 +26,4 @@ class HealthResponse(BaseModel):
     """API health status response."""
     status: str = "ok"
     model_loaded: bool
+    

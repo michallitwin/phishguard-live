@@ -74,3 +74,4 @@ if __name__ == "__main__":
     for domain in test_domains:
         result = score_domain(domain, model, le)
         print(result)
+
