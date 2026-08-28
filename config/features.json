@@ -1,0 +1,30 @@
+{
+  "known_brands": [
+    "paypal",
+    "google",
+    "microsoft",
+    "allegro",
+    "inpost",
+    "santander",
+    "apple"
+  ],
+  "suspicious_tlds": [
+    "tk",
+    "xyz",
+    "top",
+    "click",
+    "ga",
+    "work",
+    "buzz"
+  ],
+  "phishing_keywords": [
+    "login",
+    "verify",
+    "secure",
+    "account",
+    "update",
+    "confirm",
+    "signin",
+    "scam"
+  ]
+}

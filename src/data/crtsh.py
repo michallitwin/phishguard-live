@@ -42,7 +42,7 @@ def query_crtsh(
 
 
 if __name__ == "__main__":
-    search_query = "%.inpost.pl"
+    search_query = "inpost.pl"
     print(f"Sending query to crt.sh for: {search_query}...")
 
     result = query_crtsh(search_query)

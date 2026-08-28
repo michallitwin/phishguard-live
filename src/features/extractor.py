@@ -1,100 +1,73 @@
 import Levenshtein
+import json
+from typing import Any
+from pathlib import Path
 
-KNOWN_BRANDS = [
-    "paypal",
-    "google",
-    "microsoft",
-    "allegro",
-    "inpost",
-    "santander",
-    "apple",
-]
-SUSPICIOUS_TLDS = {"tk", "xyz", "top", "click", "gq", "work", "buzz"}
-PHISHING_KEYWORDS = [
-    "login",
-    "verify",
-    "secure",
-    "account",
-    "update",
-    "confirm",
-    "signin",
-    "scam",
-]
+DEFAULT_CONFIG_PATH = (
+    Path(__file__).resolve().parents[2] / "config" / "features.json"
+)
 
+class DomainFeatureExtractor:
+    """Extracts numerical and lexical features from domain strings."""
 
-def domain_length(domain: str) -> int:
-    """
-    Calculates the total length of the domain string.
-    """
-    return len(domain)
+    def __init__(self, config_path: Path | str = DEFAULT_CONFIG_PATH) -> None:
+        self.config_path = Path(config_path)
+        self.known_brands, self.suspicious_tlds, self.phishing_keywords = (
+            self._load_config()
+        )
 
+    def _load_config(self) -> tuple[list[str], set[str]. list[str]]:
+        if not self.config_path.exists():
+            raise FileNotFoundError(
+                f"Config file not found: {self.config_path}"
+            )
+        with open(self.config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-def count_digits(domain: str) -> int:
-    """
-    Counts the number of numerical digits in the domain.
-    """
-    return sum(c.isdigit() for c in domain)
+        return (
+            data.get("known_brands", []),
+            set(data.get("suspicious_tlds", [])),
+            data.get("phishing_keywords", []),
+        )
+    def _domain_length(self, domain: str) -> int:
+        return len(domain)
 
+    def _count_digits(self, domain: str) -> int:
+        return sum(c.isdigit() for c in domain)
 
-def count_hyphens(domain: str) -> int:
-    """
-    Counts the number of hyphens in the domain.
-    """
-    return domain.count("-")
+    def _count_hyphens(self, domain: str) -> int:
+        return domain.count("-")
 
+    def _brand_similarity(self, domain: str) -> float:
+        domain_core = domain.split(".")[0]
+        if not self.known_brands:
+            return 0.0
+        return max(
+            Levenshtein.ratio(domain_core, brand) for brand in self.known_brands
+        )
 
-def brand_similarity(domain: str) -> float:
-    """
-    Calculates the maximum Levenshtein similarity ratio against known brands.
-    """
-    domain_core = domain.split(".")[0]
-    return max(Levenshtein.ratio(domain_core, brand) for brand in KNOWN_BRANDS)
+    def _has_suspicious_tld(self, domain: str) -> int:
+        tld = domain.split(".")[-1]
+        return 1 if tld in self.suspicious_tlds else 0
 
+    def _keyword_count(self, domain: str) -> int:
+        return sum(1 for kw in self.phishing_keywords if kw in domain)
 
-def has_suspicious_tld(domain: str) -> int:
-    """
-    Checks if the domain ends with a known suspicious TLD.
-    
-    Returns:
-        int: 1 if suspicious, 0 otherwise.
-    """
-    tld = domain.split(".")[-1]
-    return 1 if tld in SUSPICIOUS_TLDS else 0
-
-
-def keyword_count(domain: str) -> int:
-    """
-    Counts the number of phishing-related keywords present in the domain.
-    """
-    return sum(1 for kw in PHISHING_KEYWORDS if kw in domain)
+    def extract(self, domain: str) -> dict[str, Any]:
+        """Extracts all features for a given domain."""
+        return {
+            "length": self._domain_length(domain),
+            "digits": self._count_digits(domain),
+            "hyphens": self._count_hyphens(domain),
+            "brand_sim": round(self._brand_similarity(domain), 4),
+            "suspicious_tld": self._has_suspicious_tld(domain),
+            "keywords": self._keyword_count(domain),
+        }
 
 
-def extract_features(domain: str) -> dict:
-    """
-    Extracts and aggregates a dictionary of numerical features for a given domain.
-    
-    Args:
-        domain (str): The domain name to analyze.
-        
-    Returns:
-        dict: A dictionary of calculated features.
-    """
-    return {
-        "length": domain_length(domain),
-        "digits": count_digits(domain),
-        "hyphens": count_hyphens(domain),
-        "brand_sim": round(brand_similarity(domain), 4),
-        "suspicious_tld": has_suspicious_tld(domain),
-        "keywords": keyword_count(domain),
-    }
+_extractor = DomainFeatureExtractor()
 
 
-if __name__ == "__main__":
-    test_domains = [
-        "paypal.com",
-        "paypal-verify-login.tk",
-        "google.com",
-        "gooogle-secure.xyz",
-    ]
-    for d in test_domains:
-        print(d, "->", extract_features(d))
+def extract_features(domain: str) -> dict[str, Any]:
+    """Helper function for backward compatibility with existing pipeline."""
+    return _extractor.extract(domain)

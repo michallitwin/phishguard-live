@@ -46,9 +46,3 @@ def load_tranco_domains(force_refresh: bool = False) -> set[str]:
 
     return set(df["domain"].dropna().astype(str))
 
-
-if __name__ == "__main__":
-    domains = load_tranco_domains()
-
-    print(f"Loaded {len(domains)} domains from Tranco")
-    print("Sample:", list(domains)[:5])
