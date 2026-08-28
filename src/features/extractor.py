@@ -16,7 +16,7 @@ class DomainFeatureExtractor:
             self._load_config()
         )
 
-    def _load_config(self) -> tuple[list[str], set[str]. list[str]]:
+    def _load_config(self) -> tuple[list[str], set[str], list[str]]:
         if not self.config_path.exists():
             raise FileNotFoundError(
                 f"Config file not found: {self.config_path}"
