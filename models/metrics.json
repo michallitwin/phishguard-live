@@ -1,0 +1,6 @@
+{
+  "model_name": "Gradient Boosting",
+  "f1_phishing": 0.7216,
+  "roc_auc": 0.9263,
+  "trained_at": "2026-08-28T21:19:13.486867+00:00"
+}

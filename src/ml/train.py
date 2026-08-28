@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any
-
+from datetime import datetime, timezone
 import joblib
 import numpy as np
 import pandas as pd
@@ -22,6 +22,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
 MODEL_PATH = PROJECT_ROOT / "models" / "phishing_model.joblib"
 ENCODER_PATH = PROJECT_ROOT / "models" / "label_encoder.joblib"
+METRICS_PATH = PROJECT_ROOT / "models" / "metrics.json"
+
 
 FEATURE_COLUMNS = [
     "length",
@@ -158,6 +160,29 @@ def final_evaluation(
     print(f"ROC-AUC: {roc_auc_score(y_test, y_proba):.4f}")
     print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
 
+    return y_pred, y_proba
+
+def save_metrics(
+    y_test: np.ndarray,
+    y_pred: np.ndarray,
+    y_proba: np.ndarray,
+    model_name: str,
+    output_path: Path = METRICS_PATH,
+) -> None:
+    """Calculates and persists model evaluation metrics to disk as JSON."""
+    metrics = {
+        "model_name": model_name,
+        "f1_phishing": round(float(f1_score(y_test, y_pred)), 4),
+        "roc_auc": round(float(roc_auc_score(y_test, y_proba)), 4),
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2)
+
+    print(f"Metrics saved successfully to: {output_path}")
+
 def save_artifacts(model: BaseEstimator, le: LabelEncoder) -> None:
     """Saves model and label encoder artifacts to disk."""
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -192,10 +217,15 @@ def run_pipeline() -> None:
 
     grid = tune_model(best_estimator, param_grid, X_train, y_train)
 
-    final_evaluation(grid.best_estimator_, X_test, y_test)
+    y_pred, y_proba = final_evaluation(grid.best_estimator_, X_test, y_test)
     save_artifacts(grid.best_estimator_, le)
 
-
+    save_metrics(
+        y_test=y_test,
+        y_pred=y_pred,
+        y_proba=y_proba,
+        model_name=best_model_name,
+    )
 
 if __name__ == "__main__":
     run_pipeline()
