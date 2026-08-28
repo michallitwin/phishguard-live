@@ -1,108 +1,135 @@
+import json
 from pathlib import Path
+from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
-import numpy as np
-from sklearn.metrics import f1_score
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
+MODEL_PATH = PROJECT_ROOT / "models" / "phishing_model.joblib"
+ENCODER_PATH = PROJECT_ROOT / "models" / "label_encoder.joblib"
 
-
-
-DATASET_PATH = Path("data/processed/dataset.csv")
-MODEL_PATH = Path("models/phishing_model.joblib")
-SCALER_PATH = Path("models/scaler.joblib")
-
-FEATURE_COLUMNS = ["length", "digits", "hyphens", "brand_sim", "suspicious_tld", "keywords"]
+FEATURE_COLUMNS = [
+    "length",
+    "digits",
+    "hyphens",
+    "brand_sim",
+    "suspicious_tld",
+    "keywords",
+]
 RANDOM_STATE = 42
 
+PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
+    "Gradient Boosting": {
+        "n_estimators": [100, 200],
+        "max_depth": [3, 4, 5],
+        "learning_rate": [0.05, 0.1, 0.2],
+    },
+    "Random Forest": {
+        "n_estimators": [100, 200],
+        "max_depth": [10, 20, None],
+        "min_samples_split": [2, 5],
+    },
+    "Logistic Regression": {
+        "C": [0.01, 0.1, 1.0, 10.0],
+        "solver": ["lbfgs", "liblinear"],
+    },
+    "SVM": {
+        "C": [0.1, 1.0, 10.0],
+        "kernel": ["rbf", "linear"],
+    },
+}
 
-def load_data() -> tuple:
-    """
-    Loads the dataset, extracts features, and encodes target labels.
-
-    Returns:
-        tuple: Feature matrix (X), encoded labels (y), and fitted LabelEncoder (le).
-    """
-    df = pd.read_csv(DATASET_PATH)
+def load_data(
+    dataset_path: Path = DATASET_PATH,
+    ) -> tuple[np.ndarray, np.ndarray, LabelEncoder]:
+    """Loads dataset, extracts feature matrix, and encodes target labels."""
+    df = pd.read_csv(dataset_path)
     X = df[FEATURE_COLUMNS].values
     le = LabelEncoder()
     y = le.fit_transform(df["label"])
     return X, y, le
 
 
-def get_candidate_models() -> dict:
-    """
-    Initializes candidate machine learning models for baseline evaluation.
-
-    Returns:
-        dict: Dictionary of instantiated scikit-learn models.
-    """
+def get_candidate_models() -> dict[str, BaseEstimator]:
+    """Model factory returning fresh instances of candidate estimators."""
     return {
-        "Logistic Regression": LogisticRegression(class_weight="balanced", max_iter=1000, random_state=RANDOM_STATE),
-        "Random Forest": RandomForestClassifier(class_weight="balanced", random_state=RANDOM_STATE),
-        "Gradient Boosting": GradientBoostingClassifier(random_state=RANDOM_STATE),
-        "SVM": SVC(class_weight="balanced", probability=True, random_state=RANDOM_STATE),
+        "Logistic Regression": LogisticRegression(
+            class_weight="balanced", 
+            max_iter=1000, 
+            random_state=RANDOM_STATE
+        ),
+        "Random Forest": RandomForestClassifier(
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
+        ),
+        "Gradient Boosting": GradientBoostingClassifier(
+            random_state=RANDOM_STATE
+        ),
+        "SVM": SVC(
+            class_weight="balanced", 
+            probability=True, 
+            random_state=RANDOM_STATE
+        ),
     }
 
 
-def evaluate_baseline(X: np.ndarray, y: np.ndarray) -> dict:
-    """
-    Evaluates candidate models on scaled data using the F1 score.
+def evaluate_baselines(
+    X_train: np.ndarray,
+    X_test: np.ndarray,
+    y_train: np.ndarray,
+    y_test: np.ndarray,
+    models: dict[str, BaseEstimator] | None = None,
+) -> dict[str, float]:
+    """Evaluates candidate models on scaled training data using F1 score."""
+    if models is None:
+        models = get_candidate_models()
 
-    Args:
-        X (np.ndarray): Feature matrix.
-        y (np.ndarray): Target labels.
-
-    Returns:
-        dict: Dictionary mapping model names to their F1 scores.
-    """
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    models = get_candidate_models()
-    results = {}
 
+    results = {}
     for name, model in models.items():
         model.fit(X_train_scaled, y_train)
         y_pred = model.predict(X_test_scaled)
-        score = f1_score(y_test, y_pred)
+        score = float(f1_score(y_test, y_pred))
         results[name] = score
-        print(f"{name} F1(phishing) = {score:.3f}")
+        print(f"[{name}] F1(phishing) = {score:.4f}")
 
     return results
 
 
-def tune_best_model(X: np.ndarray, y: np.ndarray) -> GridSearchCV:
-    """
-    Performs hyperparameter tuning for GradientBoosting using GridSearchCV.
-
-    Args:
-        X (np.ndarray): Feature matrix.
-        y (np.ndarray): Target labels.
-
-    Returns:
-        GridSearchCV: Fitted grid search object containing the best model.
-    """
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
-
-    param_grid = {
-        "n_estimators": [100, 200, 300],
-        "max_depth": [2, 3, 4, 5],
-        "learning_rate": [0.05, 0.1, 0.2],
-    }
-
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+def tune_model(
+    estimator: BaseEstimator,
+    param_grid: dict[str, Any],
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    cv_splits: int = 5,
+) -> GridSearchCV:
+    """Performs cross-validated hyperparameter tuning for any estimator."""
+    cv = StratifiedKFold(
+        n_splits=cv_splits,
+        shuffle=True,
+        random_state=RANDOM_STATE,
+    )
 
     grid = GridSearchCV(
-        GradientBoostingClassifier(random_state=RANDOM_STATE),
+        estimator=estimator,
         param_grid=param_grid,
         scoring="f1",
         cv=cv,
@@ -110,54 +137,65 @@ def tune_best_model(X: np.ndarray, y: np.ndarray) -> GridSearchCV:
     )
 
     grid.fit(X_train, y_train)
-
-    print("Best params:", grid.best_params_)
-    print("Best F1 (cross-validated):", round(grid.best_score_, 3))
+    print(f"Best params: {grid.best_params_}")
+    print(f"Best CV score (F1): {grid.best_score_:.4f}")
 
     return grid
 
-def final_evaluation(grid: GridSearchCV, X: np.ndarray, y: np.ndarray) -> None:
-    """
-    Evaluates the best tuned model on a held-out test set.
+def final_evaluation(
+    model: BaseEstimator,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+) -> None:
+    """Evaluates final model on held-out test set."""
+    y_pred = model.predict(X_test)
+    y_proba = model.predict_proba(X_test)[:, 1]
 
-    Args:
-        grid (GridSearchCV): Fitted grid search object.
-        X (np.ndarray): Feature matrix.
-        y (np.ndarray): Target labels.
-    """
-    _, X_test, _, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
-)
+    print("\n--- Final Evaluation (Test Set) ---")
+    print(
+        classification_report(y_test, y_pred, target_names=["legit", "phishing"])
+    )
+    print(f"ROC-AUC: {roc_auc_score(y_test, y_proba):.4f}")
+    print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
 
-    best_model = grid.best_estimator_
-    y_pred = best_model.predict(X_test)
-    y_proba = best_model.predict_proba(X_test)[:, 1]
-
-    print("\n--- Final evaluation on held-out test set ---")
-    print(classification_report(y_test, y_pred, target_names=["legit", "phishing"]))
-    print("ROC-AUC:", round(roc_auc_score(y_test, y_proba), 3))
-    print("Confusion matrix:")
-    print(confusion_matrix(y_test, y_pred))
-
-def save_model(grid: GridSearchCV, le: LabelEncoder) -> None:
-    """
-    Saves the best estimator and label encoder to disk as .joblib files.
-
-    Args:
-        grid (GridSearchCV): Fitted grid search object.
-        le (LabelEncoder): Fitted label encoder.
-    """
+def save_artifacts(model: BaseEstimator, le: LabelEncoder) -> None:
+    """Saves model and label encoder artifacts to disk."""
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(grid.best_estimator_, MODEL_PATH)
-    joblib.dump(le, MODEL_PATH.parent / "label_encoder.joblib")
-    print(f"\nModel saved to {MODEL_PATH}")
+    joblib.dump(model, MODEL_PATH)
+    joblib.dump(le, ENCODER_PATH)
+    print(f"\nArtifacts saved successfully to: {MODEL_PATH.parent}/")
+
+def run_pipeline() -> None:
+    """Orchestrates data loading, benchmarking, tuning, and evaluation."""
+    X, y, le = load_data()
+    print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
+    print(f"Dataset shape: {X.shape}")
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=RANDOM_STATE,
+        stratify=y,
+    )
+
+    print("\n--- Benchmarking Baseline Models ---")
+    baseline_results = evaluate_baselines(X_train, X_test, y_train, y_test)
+
+    best_model_name = max(baseline_results, key=baseline_results.get)
+    print(f"\nSelected best baseline model: {best_model_name}")
+
+    print(f"\n--- Hyperparameter Tuning: {best_model_name} ---")
+    candidate_models = get_candidate_models()
+    best_estimator = candidate_models[best_model_name]
+    param_grid = PARAM_GRIDS.get(best_model_name, {})
+
+    grid = tune_model(best_estimator, param_grid, X_train, y_train)
+
+    final_evaluation(grid.best_estimator_, X_test, y_test)
+    save_artifacts(grid.best_estimator_, le)
+
+
 
 if __name__ == "__main__":
-    X, y, le = load_data()
-    print("Classes:", dict(zip(le.classes_, le.transform(le.classes_))))
-    print("X shape:", X.shape)
-
-    baseline_results = evaluate_baseline(X, y)
-    best_grid = tune_best_model(X, y)
-    final_evaluation(best_grid, X, y)
-    save_model(best_grid, le)
+    run_pipeline()
