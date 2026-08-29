@@ -36,6 +36,13 @@ model, not a fixed snapshot.
 - The trained model (`models/*.joblib`) is gitignored as a generated
   artifact. It must be produced locally via `src/ml/train.py` before
   the Docker image can serve predictions — see "Run it" above.
+- Training data volatility - since phishing examples are pulled live
+  from OpenPhish at training time, model quality can vary between runs
+  depending on how many/which examples are available in the feed at that
+  moment (observed range: ~200-360 phishing examples per build). A retrain
+  on a sparser snapshot may produce a less confident model than one shown
+  in this README. For reproducible results, consider pinning a dataset
+  snapshot rather than always training on the live feed.
 
 
 # Run it
