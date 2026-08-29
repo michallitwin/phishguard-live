@@ -32,13 +32,26 @@ model, not a fixed snapshot.
 - No WHOIS or page-content analysis — structural domain features only.
 - `crt.sh` brand-monitoring module (`src/data/crtsh.py`) is implemented
   but excluded from the production pipeline due to frequent upstream
-  outages.
+  outages
+- The trained model (`models/*.joblib`) is gitignored as a generated
+  artifact. It must be produced locally via `src/ml/train.py` before
+  the Docker image can serve predictions — see "Run it" above.
 
-## Run it
+
+# Run it
+
+First, generate the trained model (required once — `models/*.joblib`
+is gitignored since it's a generated artifact, not source code):
 
 ```bash
-git clone https://github.com/michallitwin/phishguard-live.git
-cd phishguard-live
+uv sync
+uv run -m src.features.build_dataset
+uv run -m src.ml.train
+```
+
+Then build and run the API:
+
+```bash
 docker compose up --build
 ```
 
@@ -104,7 +117,7 @@ config/features.json # brand list, suspicious TLDs, keywords
 
 ```bash
 uv run -m src.features.build_dataset
-uv run -m src.ml.train
+uv run -m src.ml.train 
 ```
 
 ## Running tests

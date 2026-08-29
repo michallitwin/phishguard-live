@@ -41,7 +41,7 @@ def build_dataset() -> pd.DataFrame:
     """
     phishing_domains = fetch_phishing_domains()
     tranco_domains = load_tranco_domains()
-    
+
     sample_size = min(len(tranco_domains), LEGIT_SAMPLE_SIZE)
     legit_sample = random.sample(list(tranco_domains), sample_size)
 
@@ -49,7 +49,7 @@ def build_dataset() -> pd.DataFrame:
     legit_rows = build_labeled_rows(legit_sample, "legit")
 
     df = pd.DataFrame(phishing_rows + legit_rows)
-    
+
     df = df.sample(frac=1.0).reset_index(drop=True)
     return df
 
@@ -64,4 +64,12 @@ def save_dataset(df: pd.DataFrame) -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUTPUT_PATH, index=False)
 
-   
+
+if __name__ == "__main__":
+    print("Building dataset...")
+    dataset = build_dataset()
+    print(f"Built {len(dataset)} rows")
+    print(dataset["label"].value_counts())
+
+    save_dataset(dataset)
+    print(f"Saved to {OUTPUT_PATH}")
