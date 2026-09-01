@@ -44,9 +44,3 @@ def fetch_phishing_domains() -> set[str]:
     domains = {extract_domain(url) for url in urls} 
     return domains
 
-
-if __name__ == "__main__":
-    domains = fetch_phishing_domains()
-    print(f"Downloaded {len(domains)} unique phishing domains")
-    for d in list(domains)[:10]:
-        print(" -", d)

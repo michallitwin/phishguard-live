@@ -17,6 +17,9 @@ from sklearn.metrics import (
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
@@ -54,14 +57,25 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "C": [0.1, 1.0, 10.0],
         "kernel": ["rbf", "linear"],
     },
+    "XGBoost": {
+        "n_estimators": [100,200],
+        "max_depth": [3,5,7],
+        "learning_rate": [0.05, 0.1, 0.2],
+    },
+    "Decision Tree": {
+        "max_depth": [3, 5, 10, None],
+        "min_samples_split": [2, 5, 10],
+    },
+
 }
 
 def load_data(
     dataset_path: Path = DATASET_PATH,
+    feature_columns: list[str] = FEATURE_COLUMNS
     ) -> tuple[np.ndarray, np.ndarray, LabelEncoder]:
     """Loads dataset, extracts feature matrix, and encodes target labels."""
     df = pd.read_csv(dataset_path)
-    X = df[FEATURE_COLUMNS].values
+    X = df[feature_columns].values
     le = LabelEncoder()
     y = le.fit_transform(df["label"])
     return X, y, le
@@ -85,6 +99,14 @@ def get_candidate_models() -> dict[str, BaseEstimator]:
         "SVM": SVC(
             class_weight="balanced", 
             probability=True, 
+            random_state=RANDOM_STATE
+        ),
+        "XGBoost": XGBClassifier(
+            eval_metric ="logloss", 
+            random_state=RANDOM_STATE
+        ),
+        "Decision Tree": DecisionTreeClassifier(
+            class_weight="balanced", 
             random_state=RANDOM_STATE
         ),
     }
@@ -183,16 +205,24 @@ def save_metrics(
 
     print(f"Metrics saved successfully to: {output_path}")
 
-def save_artifacts(model: BaseEstimator, le: LabelEncoder) -> None:
-    """Saves model and label encoder artifacts to disk."""
-    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODEL_PATH)
-    joblib.dump(le, ENCODER_PATH)
-    print(f"\nArtifacts saved successfully to: {MODEL_PATH.parent}/")
 
-def run_pipeline() -> None:
+def save_artifacts(model, le, model_path=MODEL_PATH, encoder_path = ENCODER_PATH) -> None:
+    """Saves model and label encoder artifacts to disk."""
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, model_path)
+    joblib.dump(le, encoder_path)
+    print(f"\nArtifacts saved successfully to: {model_path.parent}/")
+
+
+def run_pipeline(
+        dataset_path: Path = DATASET_PATH,
+        feature_columns: list[str] =FEATURE_COLUMNS,
+        model_path: Path = MODEL_PATH,
+        encoder_path: Path = ENCODER_PATH,
+        metrics_path: Path = METRICS_PATH,
+    ) -> None:
     """Orchestrates data loading, benchmarking, tuning, and evaluation."""
-    X, y, le = load_data()
+    X, y, le = load_data(dataset_path, feature_columns)
     print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     print(f"Dataset shape: {X.shape}")
 
@@ -218,14 +248,6 @@ def run_pipeline() -> None:
     grid = tune_model(best_estimator, param_grid, X_train, y_train)
 
     y_pred, y_proba = final_evaluation(grid.best_estimator_, X_test, y_test)
-    save_artifacts(grid.best_estimator_, le)
+    save_artifacts(grid.best_estimator_, le, model_path, encoder_path)
 
-    save_metrics(
-        y_test=y_test,
-        y_pred=y_pred,
-        y_proba=y_proba,
-        model_name=best_model_name,
-    )
-
-if __name__ == "__main__":
-    run_pipeline()
+    save_metrics(y_test, y_pred, y_proba, best_model_name, metrics_path)

@@ -57,20 +57,4 @@ def score_domain(domain: str, model, le) -> dict:
     }
 
 
-if __name__ == "__main__":
-    model, le = load_artifacts()
 
-    test_domains = [
-        "paypal.com",
-        "paypal-verify-login-secure.tk",
-        "google.com",
-        "gooogle-account-update.xyz",
-        "wikipedia.org",
-        "abc.dup",
-        "scam.xyz",
-        "adasddsssddsadadddasddsadsads.ok"
-    ]
-
-    for domain in test_domains:
-        result = score_domain(domain, model, le)
-        print(result)
