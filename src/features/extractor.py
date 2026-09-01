@@ -2,6 +2,9 @@ import Levenshtein
 import json
 from typing import Any
 from pathlib import Path
+from difflib import SequenceMatcher
+import jellyfish
+
 
 DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "features.json"
@@ -46,6 +49,39 @@ class DomainFeatureExtractor:
             Levenshtein.ratio(domain_core, brand) for brand in self.known_brands
         )
 
+    def _brand_similarity_jaro(self, domain: str) -> float:
+        domain_core = domain.split(".")[0]
+        if not self.known_brands:
+            return 0.0
+        return max(
+            jellyfish.jaro_winkler_similarity(domain_core, brand) for brand in self.known_brands
+        )
+
+    def _brand_similarity_seqmatch(self, domain: str) -> float:
+        domain_core = domain.split(".")[0]
+        if not self.known_brands:
+            return 0.0
+        return max(
+            SequenceMatcher(None, domain_core, brand).ratio() for brand in self.known_brands
+        )
+
+    def _brand_similarity_ngram(self, domain: str, n: int = 3) -> float:
+        domain_core = domain.split(".")[0]
+        if not self.known_brands:
+            return 0.0
+
+        def ngrams(s: str) -> set[str]:
+            return set(s[i:i+n] for i in range(len(s) - n + 1)) or {s}
+
+        d_grams = ngrams(domain_core)
+        best = 0.0
+        for brand in self.known_brands:
+            b_grams = ngrams(brand)
+            union = len(d_grams | b_grams)
+            score = len(d_grams & b_grams) / union if union else 0.0
+            best = max(best, score)
+        return best
+
     def _has_suspicious_tld(self, domain: str) -> int:
         tld = domain.split(".")[-1]
         return 1 if tld in self.suspicious_tlds else 0
@@ -60,6 +96,9 @@ class DomainFeatureExtractor:
             "digits": self._count_digits(domain),
             "hyphens": self._count_hyphens(domain),
             "brand_sim": round(self._brand_similarity(domain), 4),
+            "brand_sim_jaro": round(self._brand_similarity_jaro(domain), 4),
+            "brand_sim_seqmatch": round(self._brand_similarity_seqmatch(domain), 4),
+            "brand_sim_ngram": round(self._brand_similarity_ngram(domain), 4),
             "suspicious_tld": self._has_suspicious_tld(domain),
             "keywords": self._keyword_count(domain),
         }

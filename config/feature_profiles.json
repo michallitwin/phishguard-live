@@ -1,0 +1,5 @@
+{
+  "core6": ["length", "digits", "hyphens", "brand_sim", "suspicious_tld", "keywords"],
+  "extended9": ["length", "digits", "hyphens", "brand_sim", "brand_sim_jaro", "brand_sim_seqmatch", "brand_sim_ngram", "suspicious_tld", "keywords"],
+  "minimal3": ["length", "brand_sim", "suspicious_tld"]
+}
