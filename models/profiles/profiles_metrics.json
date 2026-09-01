@@ -1,0 +1,53 @@
+{
+  "core6": {
+    "features": [
+      "length",
+      "digits",
+      "hyphens",
+      "brand_sim",
+      "suspicious_tld",
+      "keywords"
+    ],
+    "best_params": {
+      "learning_rate": 0.05,
+      "max_depth": 3,
+      "n_estimators": 100
+    },
+    "f1_phishing": 0.8522,
+    "roc_auc": 0.9941
+  },
+  "extended9": {
+    "features": [
+      "length",
+      "digits",
+      "hyphens",
+      "brand_sim",
+      "brand_sim_jaro",
+      "brand_sim_seqmatch",
+      "brand_sim_ngram",
+      "suspicious_tld",
+      "keywords"
+    ],
+    "best_params": {
+      "learning_rate": 0.05,
+      "max_depth": 3,
+      "n_estimators": 200
+    },
+    "f1_phishing": 0.8718,
+    "roc_auc": 0.9934
+  },
+  "minimal3": {
+    "features": [
+      "length",
+      "brand_sim",
+      "suspicious_tld"
+    ],
+    "best_params": {
+      "learning_rate": 0.2,
+      "max_depth": 3,
+      "n_estimators": 200
+    },
+    "f1_phishing": 0.9153,
+    "roc_auc": 0.9908
+  }
+}
