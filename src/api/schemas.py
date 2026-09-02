@@ -48,3 +48,4 @@ class ModelMetricsResponse(BaseModel):
     trained_at: datetime = Field(
         description="Timestamp of model training in UTC",
     )    
+    

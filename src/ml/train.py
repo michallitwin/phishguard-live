@@ -69,6 +69,7 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
 
 }
 
+
 def load_data(
     dataset_path: Path = DATASET_PATH,
     feature_columns: list[str] = FEATURE_COLUMNS

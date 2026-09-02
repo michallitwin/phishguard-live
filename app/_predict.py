@@ -18,3 +18,4 @@ test_domains = [
 for domain in test_domains:
     result = score_domain(domain, model, le)
     print(result)
+    

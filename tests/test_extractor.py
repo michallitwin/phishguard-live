@@ -8,6 +8,7 @@ def extractor():
     return DomainFeatureExtractor()
 
 
+
 def test_extract_returns_all_expected_keys(extractor):
     features = extractor.extract("paypal.com")
     expected_keys = {

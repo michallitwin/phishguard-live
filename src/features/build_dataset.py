@@ -32,6 +32,7 @@ def build_labeled_rows(domains: set[str], label: str) -> list[dict]:
     return rows
 
 
+
 def build_dataset() -> pd.DataFrame:
     """
     Builds a dataset by combining fetched phishing domains and sampled legitimate domains.

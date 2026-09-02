@@ -44,3 +44,4 @@ def fetch_phishing_domains() -> set[str]:
     domains = {extract_domain(url) for url in urls} 
     return domains
 
+

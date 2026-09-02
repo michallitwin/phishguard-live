@@ -6,6 +6,7 @@ from difflib import SequenceMatcher
 import jellyfish
 
 
+
 DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "features.json"
 )
