@@ -10,7 +10,11 @@ def extractor():
 
 def test_extract_returns_all_expected_keys(extractor):
     features = extractor.extract("paypal.com")
-    expected_keys = {"length", "digits", "hyphens", "brand_sim", "suspicious_tld", "keywords"}
+    expected_keys = {
+        "length", "digits", "hyphens",
+        "brand_sim", "brand_sim_jaro", "brand_sim_seqmatch", "brand_sim_ngram",
+        "suspicious_tld", "keywords",
+    }
     assert set(features.keys()) == expected_keys
 
 
