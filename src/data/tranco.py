@@ -46,3 +46,4 @@ def load_tranco_domains(force_refresh: bool = False) -> set[str]:
 
     return set(df["domain"].dropna().astype(str))
 
+
