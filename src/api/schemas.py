@@ -1,16 +1,25 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
+
+from src.features.extractor import DomainFeatureExtractor
+
+_validator_extractor = DomainFeatureExtractor()
 
 
 class DomainRequest(BaseModel):
     """Payload for the domain scoring request."""
     domain: str = Field(
-        min_length=3,
+        min_length=5,
         max_length=253,
         examples=["paypal-verify-login.tk"],
         description="Domain name without protocol or path",
     )
-
+    @field_validator("domain")
+    @classmethod
+    def validate_domain_format(cls, v: str) -> str:
+        if not _validator_extractor.is_valid_domain(v):
+            raise ValueError("Invalid domain format — must look like a real domain (e.g. example.com)")
+        return v
 
 class ScoreResponse(BaseModel):
     """Result of the phishing classification."""
