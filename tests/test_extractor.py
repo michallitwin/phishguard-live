@@ -50,4 +50,4 @@ def test_extract_features_backward_compatible_function():
     features = extract_features("paypal-verify.tk")
     assert isinstance(features, dict)
     assert features["suspicious_tld"] == 1
-    assert features["keywords"] >= 1
+    assert features["keywords"] >= 1 
