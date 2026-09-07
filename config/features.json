@@ -1,32 +1,58 @@
 {
   "known_brands": [
-    "paypal",
-    "google",
     "microsoft",
-    "allegro",
-    "inpost",
-    "santander",
-    "apple"
+    "linkedin",
+    "google",
+    "apple",
+    "amazon",
+    "adobe",
+    "facebook",
+    "whatsapp",
+    "paypal",
+    "chatgpt"
   ],
   "suspicious_tlds": [
-    "tk",
-    "xyz",
     "top",
+    "xyz",
+    "cfd",
+    "sbs",
+    "buzz",
+    "monster",
+    "bond",
     "click",
-    "ga",
+    "icu",
+    "cam",
+    "quest",
+    "cyou",
     "work",
-    "buzz"
+    "beauty",
+    "hair",
+    "skin",
+    "rest",
+    "lat",
+    "vip",
+    "tk"
   ],
   "phishing_keywords": [
-    "login",
-    "verify",
-    "secure",
-    "account",
-    "update",
-    "confirm",
+    "invoice",
+    "new",
+    "message",
+    "required",
+    "file",
+    "request",
+    "action",
+    "document",
+    "verification",
+    "efax",
+    "voicemail",
+    "password",
     "signin",
-    "scam"
+    "update",
+    "expired",
+    "account",
+    "payment",
+    "funding",
+    "inheritance",
+    "wiretransfer"
   ]
-} 
-
- 
+}
