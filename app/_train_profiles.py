@@ -62,3 +62,4 @@ for profile_name, cols in profiles.items():
 joblib.dump(le, OUT_DIR / "label_encoder.joblib")
 (OUT_DIR / "profiles_metrics.json").write_text(json.dumps(results, indent=2))
 print(f"\nSaved 3 tuned profile variants to {OUT_DIR}/")
+ 

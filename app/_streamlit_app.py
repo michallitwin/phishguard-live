@@ -34,22 +34,26 @@ profile_name = st.selectbox("Feature profile", list(profiles.keys()))
 domain = st.text_input("Enter a domain to check", placeholder="e.g. paypal-verify-login.tk")
 
 if st.button("Check", type="primary") and domain:
-    feature_cols = profiles[profile_name]
-    all_features = extractor.extract(domain)
-    X = np.array([[all_features[col] for col in feature_cols]])
-
-    model = models[profile_name]
-    prediction = model.predict(X)
-    proba = model.predict_proba(X)[0][1]
-    label = le.inverse_transform(prediction)[0]
-
-    if label == "phishing":
-        st.error(f"⚠️ PHISHING — probability: {proba:.1%}")
+    if not extractor.is_valid_domain(domain):
+        st.warning("⚠️ Please enter a valid domain (e.g. example.com)")
     else:
-        st.success(f"✅ LEGIT — phishing probability: {proba:.1%}")
+        feature_cols = profiles[profile_name]
+        all_features = extractor.extract(domain)
+        X = np.array([[all_features[col] for col in feature_cols]])
 
-    st.progress(float(proba))
-    st.caption(f"Features used ({len(feature_cols)}): {', '.join(feature_cols)}")
+        model = models[profile_name]
+        prediction = model.predict(X)
+        proba = model.predict_proba(X)[0][1]
+        label = le.inverse_transform(prediction)[0]
+
+        if label == "phishing":
+            st.error(f"⚠️ PHISHING — probability: {proba:.1%}")
+        else:
+            st.success(f"✅ LEGIT — phishing probability: {proba:.1%}")
+
+        st.progress(float(proba))
+        st.caption(f"Features used ({len(feature_cols)}): {', '.join(feature_cols)}")
 
 st.divider()
 st.caption("Model: Gradient Boosting (tuned per feature profile) · Data: OpenPhish + Tranco Top 1M")
+ 

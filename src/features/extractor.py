@@ -4,7 +4,7 @@ from typing import Any
 from pathlib import Path
 from difflib import SequenceMatcher
 import jellyfish
-
+import re
 
 
 DEFAULT_CONFIG_PATH = (
@@ -14,11 +14,19 @@ DEFAULT_CONFIG_PATH = (
 class DomainFeatureExtractor:
     """Extracts numerical and lexical features from domain strings."""
 
+    DOMAIN_PATTERN = re.compile(
+        r"^(?=.{5,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))+$"
+    )
+
     def __init__(self, config_path: Path | str = DEFAULT_CONFIG_PATH) -> None:
         self.config_path = Path(config_path)
         self.known_brands, self.suspicious_tlds, self.phishing_keywords = (
             self._load_config()
         )
+
+    def is_valid_domain(self, domain: str) -> bool:
+        """Checks whether a string is a plausible domain name (has a dot, valid length, no leading/trailing hyphens)."""
+        return bool(self.DOMAIN_PATTERN.match(domain.strip().lower()))
 
     def _load_config(self) -> tuple[list[str], set[str], list[str]]:
         if not self.config_path.exists():
