@@ -92,8 +92,8 @@ class DomainFeatureExtractor:
         return best
 
     def _has_suspicious_tld(self, domain: str) -> int:
-        tld = domain.split(".")[-1]
-        return 1 if tld in self.suspicious_tlds else 0
+        domain = domain.lower()
+        return 1 if any(domain == t or domain.endswith("." + t) for t in self.suspicious_tlds) else 0
 
     def _keyword_count(self, domain: str) -> int:
         return sum(1 for kw in self.phishing_keywords if kw in domain)
