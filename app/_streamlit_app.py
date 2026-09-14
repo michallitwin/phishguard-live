@@ -1,49 +1,73 @@
-"""Simple web interface for checking domains for phishing indicators.
-Lets the user choose which feature profile the model was trained on."""
+"""Web interface for checking domains for phishing indicators.
+Dynamically loads models from models/profiles/ and feature profiles from config/.
+"""
 import sys
 import json
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
+import numpy as np
 import joblib
 import streamlit as st
-from src.features.extractor import DomainFeatureExtractor
-import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PROFILES_DIR = PROJECT_ROOT / "models" / "profiles"
-PROFILES_CONFIG = PROJECT_ROOT / "config" / "feature_profiles.json"
+CONFIG_DIR = PROJECT_ROOT / "config"
+PROFILES_CONFIG = CONFIG_DIR / "feature_profiles.json"
+
+sys.path.insert(0, str(PROJECT_ROOT))
+from src.features.extractor import DomainFeatureExtractor
 
 st.set_page_config(page_title="PhishGuard Live", page_icon="🛡️")
 st.title("🛡️ PhishGuard Live")
 st.caption("Phishing domain detection based on domain structure")
 
 
+MODEL_OPTIONS = {
+    "XGBoost": "xgboost",
+    "Random Forest": "random_forest",
+    "Gradient Boosting": "gradient_boosting",
+}
+
+
 @st.cache_resource
-def load_profile_data():
-    profiles = json.loads(PROFILES_CONFIG.read_text())
+def load_base_assets():
+    profiles = json.loads(PROFILES_CONFIG.read_text(encoding="utf-8"))
     le = joblib.load(PROFILES_DIR / "label_encoder.joblib")
-    models = {name: joblib.load(PROFILES_DIR / f"{name}.joblib") for name in profiles}
-    return profiles, models, le
+    return profiles, le
 
 
-profiles, models, le = load_profile_data()
+@st.cache_resource
+def load_model(model_slug: str, profile_name: str):
+    model_path = PROFILES_DIR / f"{model_slug}_{profile_name}.joblib"
+    if not model_path.exists():
+        raise FileNotFoundError(f"Cannot find model: {model_path.name}")
+    return joblib.load(model_path)
+
+
+profiles, le = load_base_assets()
 extractor = DomainFeatureExtractor()
+phishing_idx = list(le.classes_).index("phishing")
 
-profile_name = st.selectbox("Feature profile", list(profiles.keys()))
+col1, col2 = st.columns(2)
+with col1:
+    selected_model_label = st.selectbox("Pick Model", list(MODEL_OPTIONS.keys()))
+with col2:
+    selected_profile = st.selectbox("Feature Profile", list(profiles.keys()))
+
+model_slug = MODEL_OPTIONS[selected_model_label]
+model = load_model(model_slug, selected_profile)
+feature_cols = profiles[selected_profile]
+
 domain = st.text_input("Enter a domain to check", placeholder="e.g. paypal-verify-login.tk")
 
 if st.button("Check", type="primary") and domain:
     if not extractor.is_valid_domain(domain):
         st.warning("⚠️ Please enter a valid domain (e.g. example.com)")
     else:
-        feature_cols = profiles[profile_name]
         all_features = extractor.extract(domain)
         X = np.array([[all_features[col] for col in feature_cols]])
 
-        model = models[profile_name]
         prediction = model.predict(X)
-        proba = model.predict_proba(X)[0][1]
+        proba = model.predict_proba(X)[0][phishing_idx]
         label = le.inverse_transform(prediction)[0]
 
         if label == "phishing":
@@ -52,8 +76,10 @@ if st.button("Check", type="primary") and domain:
             st.success(f"✅ LEGIT — phishing probability: {proba:.1%}")
 
         st.progress(float(proba))
-        st.caption(f"Features used ({len(feature_cols)}): {', '.join(feature_cols)}")
+        st.caption(
+            f"Engine: **{selected_model_label}** | Profile: **{selected_profile}** ({len(feature_cols)} cech) | "
+            f"Features: `{', '.join(feature_cols)}`"
+        )
 
 st.divider()
-st.caption("Model: Gradient Boosting (tuned per feature profile) · Data: OpenPhish + Tranco Top 1M")
- 
+st.caption(f"Active Model: {selected_model_label} · Profile: {selected_profile} · Data: OpenPhish + Tranco Top 1M")

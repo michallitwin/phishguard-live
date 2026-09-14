@@ -1,7 +1,14 @@
 {
-  "model_name": "Gradient Boosting",
-  "f1_phishing": 0.6889,
-  "roc_auc": 0.8824,
-  "trained_at": "2026-09-01T10:49:49.136430+00:00"
+  "Gradient Boosting": {
+    "f1_phishing": 0.8522,
+    "roc_auc": 0.9941
+  },
+  "Random Forest": {
+    "f1_phishing": 0.8372,
+    "roc_auc": 0.9927
+  },
+  "XGBoost": {
+    "f1_phishing": 0.9043,
+    "roc_auc": 0.9932
+  }
 }
- 

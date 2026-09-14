@@ -235,21 +235,46 @@ def run_pipeline(
         stratify=y,
     )
 
-    print("\n--- Benchmarking Baseline Models ---")
-    baseline_results = evaluate_baselines(X_train, X_test, y_train, y_test)
+    TARGET_MODELS = {
+        "Gradient Boosting": "gradient_boosting.joblib",
+        "Random Forest": "random_forest.joblib",
+        "XGBoost": "xgboost.joblib",
+    }
 
-    best_model_name = max(baseline_results, key=baseline_results.get)
-    print(f"\nSelected best baseline model: {best_model_name}")
-
-    print(f"\n--- Hyperparameter Tuning: {best_model_name} ---")
+    
     candidate_models = get_candidate_models()
-    best_estimator = candidate_models[best_model_name]
-    param_grid = PARAM_GRIDS.get(best_model_name, {})
+    models_dir = PROJECT_ROOT / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
 
-    grid = tune_model(best_estimator, param_grid, X_train, y_train)
+    joblib.dump(le, encoder_path)
 
-    y_pred, y_proba = final_evaluation(grid.best_estimator_, X_test, y_test)
-    save_artifacts(grid.best_estimator_, le, model_path, encoder_path)
 
-    save_metrics(y_test, y_pred, y_proba, best_model_name, metrics_path)
+    all_metrics = {}
+
+    for model_name, filename in TARGET_MODELS.items():
+        print(f"\n==========================================")
+        print(f"--- Hyperparameter Tuning: {model_name} ---")
+        print(f"==========================================")
+
+
+        estimator = candidate_models[model_name]
+        param_grid = PARAM_GRIDS.get(model_name, {})
+
+        grid = tune_model(estimator, param_grid, X_train, y_train)
+        best_model = grid.best_estimator_
+
+        y_pred, y_proba = final_evaluation(best_model, X_test, y_test)
+
+        save_path = models_dir / filename
+        joblib.dump(best_model, save_path)
+        print(f"Saved {model_name} -> {save_path}")
+
+        all_metrics[model_name] = {
+            "f1_phishing": round(float(f1_score(y_test, y_pred)), 4),
+            "roc_auc": round(float(roc_auc_score(y_test, y_proba)), 4),
+        }
+
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"\nAll models trained and saved to {models_dir}")
  

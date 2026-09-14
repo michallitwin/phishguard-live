@@ -120,6 +120,14 @@ tests/                 # unit tests
 config/features.json # brand list, suspicious TLDs, keywords
 ```
 
+links to websites:
+https://expel.com/blog/top-phishing-keywords/
+
+https://blog.checkpoint.com/research/
+
+which-brands-are-impersonated-most-inside-the-q2-2026-brand-phishing-report/
+https://www.cybercrimeinfocenter.org/top-20-tlds-by-malicious-phishing-domains
+
 ## Rebuilding the dataset and retraining
 
 ```bash
