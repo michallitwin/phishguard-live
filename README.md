@@ -10,18 +10,27 @@ supervised classifier instead of relying on rules or an LLM call.
 
 Extracts structural features from a domain name (length, brand similarity,
 suspicious TLD, keyword patterns), scores it with a trained model, and
-returns a phishing probability via a REST API and a Streamlit demo UI.
-Supports multiple model architectures (Gradient Boosting, Random Forest,
-XGBoost) and multiple feature profiles (`minimal3`, `core6`, `extended9`)
-for side-by-side comparison.
+returns a phishing probability via a REST API. A separate Streamlit demo
+lets you interactively compare different model architectures (Gradient
+Boosting, Random Forest, XGBoost) and feature profiles (`minimal3`,
+`core6`, `extended9`) side by side.
 
-## Results
+## Architecture: production vs. exploration
+
+- **REST API** (`src/api/`) serves a **single, benchmarked model**
+  (currently Gradient Boosting) for predictable, consistent production
+  behavior.
+- **Streamlit demo** (`app/_streamlit_app.py`) loads a separate set of
+  9 models (3 architectures × 3 feature profiles, trained via
+  `app/_train_profiles.py`) purely for exploration and comparison — not
+  used in the API.
+
+## Results (production model)
 
 - Baseline comparison: Logistic Regression, Random Forest, Gradient
   Boosting, SVM, Decision Tree, XGBoost → **Gradient Boosting** selected
-  for production
 - Tuned via GridSearchCV (5-fold stratified CV)
-- Test set: **ROC-AUC 0.92**, F1 0.73 (phishing class)
+- Test set: **ROC-AUC 0.89**, F1 0.81 (phishing class)
 - Full EDA, PCA, and DBSCAN outlier analysis in `notebooks/eda.ipynb`
 
 Metrics are regenerated automatically on every training run (see
@@ -38,11 +47,17 @@ modern phishing patterns (crypto wallet terms, free hosting platforms),
 which rebalanced the dataset and brought every feature's contribution to
 ≥10%.
 
+A related bug was found and fixed during this process: `suspicious_tld`
+detection only checked the last dot-separated segment of a domain, so
+multi-part suspicious hosts like `pages.dev` or `blogspot.com` were never
+matched. Fixed by checking whether the domain ends with any configured
+suffix instead of an exact last-segment match.
+
 ## Configuration sources
 
 Values in `config/features.json` are informed by public threat-intel
 references rather than picked arbitrarily:
-- Suspicious TLDs — [Cybercrime Information Center](https://www.cybercrimeinfocenter.org/top-20-tlds-by-malicious-phishing-domains)
+- Suspicious TLDs/hosts — [Cybercrime Information Center](https://www.cybercrimeinfocenter.org/top-20-tlds-by-malicious-phishing-domains)
 - Most-impersonated brands — [Check Point Research Brand Phishing Report](https://blog.checkpoint.com/research/which-brands-are-impersonated-most-inside-the-q2-2026-brand-phishing-report/)
 - Common phishing keywords — [Expel: Top Phishing Keywords](https://expel.com/blog/top-phishing-keywords/)
 
@@ -58,43 +73,35 @@ references rather than picked arbitrarily:
 - Trained models (`models/**/*.joblib`) are gitignored as generated
   artifacts — must be produced locally before serving predictions.
 - Training data volatility — phishing examples are pulled live from
-  OpenPhish at build time, so model quality varies between runs
-  (observed range: ~200-360 phishing examples per build).
-- Some OpenPhish snapshots contain many near-duplicate domains from the
-  same automated phishing campaign (e.g. shared naming patterns on
+  OpenPhish at build time, so model quality varies between runs.
+- Some OpenPhish snapshots contain near-duplicate domains from the same
+  automated phishing campaign (shared naming patterns, e.g. on
   `pages.dev`). Since `train_test_split` splits randomly rather than by
   campaign, this can inflate apparent test-set performance in some runs —
-  see `notebooks/eda.ipynb` for a documented example. Grouping by campaign
-  identity before splitting is a candidate future improvement.
-- Model architecture affects stability on this dataset size — Random
-  Forest showed noticeably less stable predictions on clear-cut legitimate
-  domains than Gradient Boosting/XGBoost in manual testing.
+  see `notebooks/eda.ipynb` for a documented example.
+- Random Forest showed noticeably less stable predictions on clear-cut
+  legitimate domains than Gradient Boosting/XGBoost in manual testing on
+  the exploratory (Streamlit) model set.
 
 ## Run it
 
 ```bash
 uv sync
-
 uv run app/_build_dataset.py
 uv run app/_train_models.py
-```
-
-Then build and run the API:
-
-```bash
 docker compose up --build
 ```
 
 Open http://localhost:8000/docs
 
-### Streamlit demo
+### Streamlit demo (model & feature-profile comparison)
 
 ```bash
+uv run app/_train_profiles.py   # one-time: trains the 9-model exploration set
 uv run streamlit run app/_streamlit_app.py
 ```
 
-Open http://localhost:8501 — lets you pick a model and feature profile,
-and check any domain interactively.
+Open http://localhost:8501
 
 ## API usage
 
@@ -126,8 +133,7 @@ on every training run.
 ## CI/CD
 
 Every push runs the full test suite via GitHub Actions on a clean Ubuntu
-environment, using the locked dependency set (`uv sync --frozen`) to catch
-environment drift, not just logic errors.
+environment, using the locked dependency set (`uv sync --frozen`).
 
 ## Tech stack
 
@@ -138,17 +144,31 @@ pytest, GitHub Actions
 
 app/ # entrypoint scripts (run these — not importable modules)
 ├── _build_dataset.py # fetch data + extract features + save dataset.csv
-├── _train_models.py # train + tune the production model
-├── _train_profiles.py # train Gradient Boosting across feature profiles
-└── _streamlit_app.py # interactive demo UI
+├── _train_models.py # train + tune the SINGLE production model
+├── _train_profiles.py # train 9 models (3 architectures x 3 profiles) for demo
+└── _streamlit_app.py # interactive model/profile comparison UI
 src/ # library code — no side effects on import
 ├── data/ # OpenPhish, Tranco, crt.sh fetchers
 ├── features/ # feature extraction + dataset building
 ├── ml/ # training, tuning, evaluation, prediction
-└── api/ # FastAPI app
+└── api/ # FastAPI app (serves the single production model)
 notebooks/eda.ipynb # EDA, PCA, DBSCAN outlier analysis
 tests/ # unit tests
 config/
-├── features.json # brand list, suspicious TLDs, keywords
+├── features.json # brand list, suspicious TLDs/hosts, keywords
 └── feature_profiles.json # named feature-column subsets
 .github/workflows/ # CI pipeline
+
+
+## Rebuilding the dataset and retraining
+
+```bash
+uv run app/_build_dataset.py
+uv run app/_train_models.py
+```
+
+## Running tests
+
+```bash
+uv run pytest -v
+```
