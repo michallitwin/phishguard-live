@@ -44,8 +44,16 @@ feature importance) while ignoring `keywords` and `suspicious_tld` (0%) —
 a classic case of shortcut learning, caused by these features appearing too
 rarely in the original dataset. The feature config was expanded to reflect
 modern phishing patterns (crypto wallet terms, free hosting platforms),
-which rebalanced the dataset and brought every feature's contribution to
-≥10%.
+which brought `suspicious_tld` and `keywords` into meaningful use (10%
+and 3%, up from 0% for both). Domain length remains the single strongest
+predictor (55%), which is partly justified — brand-impersonation phishing
+in this dataset tends to be systematically longer than legitimate domains
+(e.g. `paypal-verify-login-secure.tk` vs. `paypal.com`) — but is a
+documented limitation: short, low-effort phishing domains (e.g.
+`scam.xyz`) remain harder for the model to catch. Reducing this reliance
+further (e.g. via `max_features`/`subsample` tuning) was considered but
+not pursued, to avoid trading real detection accuracy for a more evenly
+distributed importance chart.
 
 A related bug was found and fixed during this process: `suspicious_tld`
 detection only checked the last dot-separated segment of a domain, so
