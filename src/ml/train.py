@@ -43,6 +43,8 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "n_estimators": [100, 200],
         "max_depth": [3, 4, 5],
         "learning_rate": [0.05, 0.1, 0.2],
+        "max_features": [0.5, 0.7, None],
+        "subsample": [0.7, 0.85, 1.0],
     },
     "Random Forest": {
         "n_estimators": [100, 200],
