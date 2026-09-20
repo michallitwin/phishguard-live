@@ -87,9 +87,13 @@ references rather than picked arbitrarily:
   `pages.dev`). Since `train_test_split` splits randomly rather than by
   campaign, this can inflate apparent test-set performance in some runs —
   see `notebooks/eda.ipynb` for a documented example.
-- Random Forest showed noticeably less stable predictions on clear-cut
-  legitimate domains than Gradient Boosting/XGBoost in manual testing on
-  the exploratory (Streamlit) model set.
+-  Model architecture and feature profile combinations vary significantly in
+  reliability. Random Forest on the `extended9` profile, for example, flags
+  `google.com` as 63% likely phishing — a clear false positive — while the
+  production Gradient Boosting model scores the same domain at ~2-4%. This
+  is a deliberate part of the Streamlit demo: comparing architectures
+  side-by-side surfaces real differences in stability that a single
+  aggregate metric (F1/AUC) can hide.
 
 ## Run it
 
@@ -126,6 +130,13 @@ curl -X POST http://localhost:8000/api/score \
   "phishing_probability": 0.94
 }
 ```
+
+The classification threshold is set to 0.25, not the default 0.5 — since
+missing a phishing domain is more costly than a false alarm, any domain
+scoring ≥25% phishing probability is classified as `"phishing"`. This is
+specific to the production API; the exploratory Streamlit models use the
+standard 0.5 threshold for fair side-by-side comparison across
+architectures.
 
 Input is validated (must look like a real domain, e.g. `example.com`) —
 malformed requests are rejected with a `422` before reaching the model.
