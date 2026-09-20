@@ -151,20 +151,35 @@ pytest, GitHub Actions
 ## Project structure
 
 app/ # entrypoint scripts (run these — not importable modules)
+
 ├── _build_dataset.py # fetch data + extract features + save dataset.csv
+
 ├── _train_models.py # train + tune the SINGLE production model
+
 ├── _train_profiles.py # train 9 models (3 architectures x 3 profiles) for demo
+
 └── _streamlit_app.py # interactive model/profile comparison UI
+
 src/ # library code — no side effects on import
+
 ├── data/ # OpenPhish, Tranco, crt.sh fetchers
+
 ├── features/ # feature extraction + dataset building
+
 ├── ml/ # training, tuning, evaluation, prediction
+
 └── api/ # FastAPI app (serves the single production model)
+
 notebooks/eda.ipynb # EDA, PCA, DBSCAN outlier analysis
+
 tests/ # unit tests
+
 config/
+
 ├── features.json # brand list, suspicious TLDs/hosts, keywords
+
 └── feature_profiles.json # named feature-column subsets
+
 .github/workflows/ # CI pipeline
 
 
