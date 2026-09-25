@@ -1367,5 +1367,283 @@
         "correct": true
       }
     ]
+  },
+  {
+    "timestamp": "2026-09-21T09:46:14.135753+00:00",
+    "accuracy": 0.7895,
+    "results": [
+      {
+        "domain": "paypal.scam.xyz",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.121,
+        "correct": false
+      },
+      {
+        "domain": "apple.xyz.login",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.046,
+        "correct": false
+      },
+      {
+        "domain": "google-scam.top",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.273,
+        "correct": true
+      },
+      {
+        "domain": "chatgpt.buzz",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.085,
+        "correct": false
+      },
+      {
+        "domain": "googl3.scam",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.038,
+        "correct": false
+      },
+      {
+        "domain": "paypal.cfd",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.271,
+        "correct": true
+      },
+      {
+        "domain": "paypal-verify-login-secure.tk",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.996,
+        "correct": true
+      },
+      {
+        "domain": "gooogle-account-update.scam",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.986,
+        "correct": true
+      },
+      {
+        "domain": "microsoft-support-portal-verify.top",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.997,
+        "correct": true
+      },
+      {
+        "domain": "apple-id-locked-verify-now.xyz",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.933,
+        "correct": true
+      },
+      {
+        "domain": "google.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.042,
+        "correct": true
+      },
+      {
+        "domain": "apple.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.042,
+        "correct": true
+      },
+      {
+        "domain": "paypal.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.042,
+        "correct": true
+      },
+      {
+        "domain": "github.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.011,
+        "correct": true
+      },
+      {
+        "domain": "mozilla.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.027,
+        "correct": true
+      },
+      {
+        "domain": "wikipedia.org",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.016,
+        "correct": true
+      },
+      {
+        "domain": "developer.mozilla.org",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.172,
+        "correct": true
+      },
+      {
+        "domain": "stackoverflow.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.02,
+        "correct": true
+      },
+      {
+        "domain": "microsoft.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.026,
+        "correct": true
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T10:29:13.965290+00:00",
+    "accuracy": 0.7895,
+    "results": [
+      {
+        "domain": "paypal.scam.xyz",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.121,
+        "correct": false
+      },
+      {
+        "domain": "apple.xyz.login",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.046,
+        "correct": false
+      },
+      {
+        "domain": "google-scam.top",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.273,
+        "correct": true
+      },
+      {
+        "domain": "chatgpt.buzz",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.085,
+        "correct": false
+      },
+      {
+        "domain": "googl3.scam",
+        "expected": "phishing",
+        "predicted": "legit",
+        "phishing_probability": 0.038,
+        "correct": false
+      },
+      {
+        "domain": "paypal.cfd",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.271,
+        "correct": true
+      },
+      {
+        "domain": "paypal-verify-login-secure.tk",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.996,
+        "correct": true
+      },
+      {
+        "domain": "gooogle-account-update.scam",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.986,
+        "correct": true
+      },
+      {
+        "domain": "microsoft-support-portal-verify.top",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.997,
+        "correct": true
+      },
+      {
+        "domain": "apple-id-locked-verify-now.xyz",
+        "expected": "phishing",
+        "predicted": "phishing",
+        "phishing_probability": 0.933,
+        "correct": true
+      },
+      {
+        "domain": "google.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.042,
+        "correct": true
+      },
+      {
+        "domain": "apple.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.042,
+        "correct": true
+      },
+      {
+        "domain": "paypal.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.042,
+        "correct": true
+      },
+      {
+        "domain": "github.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.011,
+        "correct": true
+      },
+      {
+        "domain": "mozilla.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.027,
+        "correct": true
+      },
+      {
+        "domain": "wikipedia.org",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.016,
+        "correct": true
+      },
+      {
+        "domain": "developer.mozilla.org",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.172,
+        "correct": true
+      },
+      {
+        "domain": "stackoverflow.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.02,
+        "correct": true
+      },
+      {
+        "domain": "microsoft.com",
+        "expected": "legit",
+        "predicted": "legit",
+        "phishing_probability": 0.026,
+        "correct": true
+      }
+    ]
   }
 ]
