@@ -4,16 +4,15 @@ use in the Streamlit demo — does NOT touch the production model."""
 import sys
 import json
 from pathlib import Path
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import f1_score, roc_auc_score
-
 from src.ml.train import tune_model, get_candidate_models, PARAM_GRIDS, RANDOM_STATE
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +28,7 @@ le = LabelEncoder()
 y = le.fit_transform(df["label"])
 phishing_idx = list(le.classes_).index("phishing")
 joblib.dump(le, OUT_DIR / "label_encoder.joblib")
+domains = df["domain"].astype(str).to_numpy(dtype=object)
 
 TARGET_MODELS = ["Gradient Boosting", "Random Forest", "XGBoost"]
 
@@ -36,9 +36,18 @@ results = {}
 
 for profile_name, cols in profiles.items():
     X = df[cols]
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=RANDOM_STATE
+    X_train, X_test, domains_train, domains_test, y_train, y_test = train_test_split(
+    X, domains, y, test_size=0.2, stratify=y, random_state=RANDOM_STATE
     )
+
+    vectorizer = TfidfVectorizer(analyzer="char", ngram_range=(2, 4), max_features=100)
+    tfidf_train = vectorizer.fit_transform(domains_train).toarray()
+    tfidf_test = vectorizer.transform(domains_test).toarray()
+
+    X_train = np.hstack([X_train.to_numpy(), tfidf_train])
+    X_test = np.hstack([X_test.to_numpy(), tfidf_test])
+
+    joblib.dump(vectorizer, OUT_DIR / f"vectorizer_{profile_name}.joblib")
 
     results[profile_name] = {}
 
