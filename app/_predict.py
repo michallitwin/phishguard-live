@@ -4,7 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.ml.predict import load_artifacts, score_domain
 
-model, le = load_artifacts()
+model, le, vectorizer = load_artifacts()
 
 test_domains = [
     "paypal.com",

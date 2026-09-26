@@ -2,88 +2,94 @@
   "core6": {
     "Gradient Boosting": {
       "best_params": {
-        "learning_rate": 0.05,
+        "learning_rate": 0.2,
         "max_depth": 4,
-        "n_estimators": 100
+        "max_features": 0.5,
+        "n_estimators": 200,
+        "subsample": 1.0
       },
-      "f1_phishing": 0.6596,
-      "roc_auc": 0.8716
+      "f1_phishing": 0.8,
+      "roc_auc": 0.9297
     },
     "Random Forest": {
       "best_params": {
-        "max_depth": 10,
+        "max_depth": null,
         "min_samples_split": 2,
-        "n_estimators": 200
+        "n_estimators": 100
       },
-      "f1_phishing": 0.6667,
-      "roc_auc": 0.8709
+      "f1_phishing": 0.7706,
+      "roc_auc": 0.9378
     },
     "XGBoost": {
       "best_params": {
-        "learning_rate": 0.1,
-        "max_depth": 3,
+        "learning_rate": 0.2,
+        "max_depth": 5,
         "n_estimators": 200
       },
-      "f1_phishing": 0.6957,
-      "roc_auc": 0.887
+      "f1_phishing": 0.8283,
+      "roc_auc": 0.9348
     }
   },
   "extended9": {
     "Gradient Boosting": {
       "best_params": {
-        "learning_rate": 0.1,
+        "learning_rate": 0.2,
         "max_depth": 3,
-        "n_estimators": 200
+        "max_features": null,
+        "n_estimators": 200,
+        "subsample": 0.85
       },
-      "f1_phishing": 0.6596,
-      "roc_auc": 0.8776
+      "f1_phishing": 0.785,
+      "roc_auc": 0.9362
     },
     "Random Forest": {
       "best_params": {
-        "max_depth": 10,
+        "max_depth": null,
         "min_samples_split": 2,
-        "n_estimators": 200
+        "n_estimators": 100
       },
-      "f1_phishing": 0.7156,
-      "roc_auc": 0.8911
+      "f1_phishing": 0.7961,
+      "roc_auc": 0.9469
     },
     "XGBoost": {
       "best_params": {
-        "learning_rate": 0.05,
-        "max_depth": 5,
-        "n_estimators": 100
+        "learning_rate": 0.1,
+        "max_depth": 7,
+        "n_estimators": 200
       },
-      "f1_phishing": 0.6739,
-      "roc_auc": 0.8918
+      "f1_phishing": 0.8081,
+      "roc_auc": 0.943
     }
   },
   "minimal3": {
     "Gradient Boosting": {
       "best_params": {
-        "learning_rate": 0.05,
-        "max_depth": 5,
-        "n_estimators": 200
+        "learning_rate": 0.1,
+        "max_depth": 4,
+        "max_features": 0.5,
+        "n_estimators": 200,
+        "subsample": 1.0
       },
-      "f1_phishing": 0.6186,
-      "roc_auc": 0.862
+      "f1_phishing": 0.7525,
+      "roc_auc": 0.9246
     },
     "Random Forest": {
       "best_params": {
-        "max_depth": 10,
+        "max_depth": null,
         "min_samples_split": 2,
         "n_estimators": 100
       },
-      "f1_phishing": 0.6452,
-      "roc_auc": 0.8784
+      "f1_phishing": 0.781,
+      "roc_auc": 0.9333
     },
     "XGBoost": {
       "best_params": {
-        "learning_rate": 0.05,
-        "max_depth": 3,
-        "n_estimators": 200
+        "learning_rate": 0.2,
+        "max_depth": 5,
+        "n_estimators": 100
       },
-      "f1_phishing": 0.6512,
-      "roc_auc": 0.8912
+      "f1_phishing": 0.7959,
+      "roc_auc": 0.9428
     }
   }
 }

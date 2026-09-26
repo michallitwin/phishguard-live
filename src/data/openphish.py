@@ -30,6 +30,8 @@ def extract_domain(url: str) -> str:
     parsed = urlparse(url)
     domain = parsed.netloc
     domain = domain.split(":")[0]
+    if domain.startswith("www."):
+        domain = domain[4:]
     return domain
 
 
