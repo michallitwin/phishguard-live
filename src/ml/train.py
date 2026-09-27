@@ -56,6 +56,7 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "n_estimators": [100, 200],
         "max_depth": [10, 20, None],
         "min_samples_split": [2, 5],
+        "max_features": ["sqrt", "log2", None],
     },
     "Logistic Regression": {
         "C": [0.01, 0.1, 1.0, 10.0],
@@ -69,6 +70,8 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "n_estimators": [100,200],
         "max_depth": [3,5,7],
         "learning_rate": [0.05, 0.1, 0.2],
+        "reg_alpha": [0, 0.1, 1.0],
+        "reg_lambda": [1.0, 5.0, 10.0],
     },
     "Decision Tree": {
         "max_depth": [3, 5, 10, None],
