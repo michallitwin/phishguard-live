@@ -111,13 +111,15 @@ references rather than picked arbitrarily:
   `pages.dev`). Since `train_test_split` splits randomly rather than by
   campaign, this can inflate apparent test-set performance in some runs —
   see `notebooks/eda.ipynb` for a documented example.
--  Model architecture and feature profile combinations vary significantly in
-  reliability. Random Forest on the `extended9` profile, for example, flags
-  `google.com` as 63% likely phishing — a clear false positive — while the
-  production Gradient Boosting model scores the same domain at ~2-4%. This
-  is a deliberate part of the Streamlit demo: comparing architectures
-  side-by-side surfaces real differences in stability that a single
-  aggregate metric (F1/AUC) can hide.
+- Model architecture and feature profile combinations vary in reliability.
+  An earlier version of Random Forest on the `extended9` profile flagged
+  `google.com` as 63% likely phishing — a clear false positive. Adding
+  `max_features` regularization to Random Forest (and `reg_alpha`/
+  `reg_lambda` to XGBoost) reduced this to 40% (correctly classified as
+  legit, though still less confident than Gradient Boosting's ~2-4%),
+  confirming that under-regularized tree ensembles were a real source of
+  instability on this dataset size — not just an inherent architecture
+  limitation.
   - Brand similarity alone, without a suspicious TLD or keyword to
   reinforce it, is not always enough to trigger a phishing classification
   (e.g. `googl3.com` on a safe `.com` TLD scores as legit on some
