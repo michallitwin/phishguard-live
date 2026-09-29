@@ -31,7 +31,15 @@ def load_artifacts() -> tuple:
 
 
 def score_domain(domain: str, model, le, vectorizer) -> dict:
-    """Extracts structured + TF-IDF features and predicts phishing probability."""
+    """Extracts features from a domain and predicts its phishing probability.
+
+    Args:
+        domain: raw domain string to classify, e.g. "paypal-verify.tk".
+        model: trained classifier exposing predict_proba().
+        le: LabelEncoder used to map "legit"/"phishing" during training.
+        vectorizer: fitted TfidfVectorizer producing character n-gram
+            features; must be the same instance saved alongside the model.
+    """
     features = extract_features(domain)
     structured = np.array([[features[col] for col in FEATURE_COLUMNS]])
 

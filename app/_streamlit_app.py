@@ -42,8 +42,12 @@ def load_model(model_slug: str, profile_name: str):
         raise FileNotFoundError(f"Cannot find model: {model_path.name}")
     return joblib.load(model_path)
 
+
 @st.cache_resource
 def load_vectorizer(profile_name: str):
+    """Loads the pre-fitted TF-IDF vectorizer for a given feature profile.
+    Converts a raw domain string into character n-gram frequency features,
+    matching the vocabulary the model was trained on."""
     path = PROFILES_DIR / f"vectorizer_{profile_name}.joblib"
     return joblib.load(path)
 
