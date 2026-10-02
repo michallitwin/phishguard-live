@@ -27,22 +27,17 @@ DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
 MODEL_PATH = PROJECT_ROOT / "models" / "phishing_model.joblib"
 ENCODER_PATH = PROJECT_ROOT / "models" / "label_encoder.joblib"
 METRICS_PATH = PROJECT_ROOT / "models" / "metrics.json"
+VECTORIZER_PATH = PROJECT_ROOT / "models" / "tfidf_vectorizer.joblib"  
+MODEL_CONFIG_PATH = PROJECT_ROOT / "config" / "model_config.json"
 
-TFIDF_MAX_FEATURES = 100
-TFIDF_NGRAM_RANGE = (2, 4)
-VECTORIZER_PATH = PROJECT_ROOT / "models" / "tfidf_vectorizer.joblib"
+with open(MODEL_CONFIG_PATH, "r", encoding="utf-8") as f:
+    _config = json.load(f)
 
+RANDOM_STATE = _config["random_state"]
+FEATURE_COLUMNS = _config["feature_columns"]
+TFIDF_MAX_FEATURES = _config["tfidf"]["max_features"]
+TFIDF_NGRAM_RANGE = tuple(_config["tfidf"]["ngram_range"])
 
-
-FEATURE_COLUMNS = [
-    "length",
-    "digits",
-    "hyphens",
-    "brand_sim",
-    "suspicious_tld",
-    "keywords",
-]
-RANDOM_STATE = 42
 
 PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
     "Gradient Boosting": {
@@ -233,31 +228,37 @@ def run_pipeline(
         model_path: Path = MODEL_PATH,
         encoder_path: Path = ENCODER_PATH,
         metrics_path: Path = METRICS_PATH,
+        vectorizer_path: Path = VECTORIZER_PATH,
+        use_tfidf: bool = True,
     ) -> None:
     """Orchestrates data loading, benchmarking, tuning, and evaluation."""
     X, domains, y, le = load_data(dataset_path, feature_columns)
     print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     print(f"Dataset shape: {X.shape}")
 
-    X_train, X_test, domains_train, domains_test, y_train, y_test = train_test_split(
-        X, domains, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y,
-    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+    domains_train, domains_test = train_test_split(
+        domains, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
 
-    print("\n--- Fitting TF-IDF on character n-grams (train domains only) ---")
-    vectorizer = TfidfVectorizer(
-        analyzer="char",
-        ngram_range=TFIDF_NGRAM_RANGE,
-        max_features=TFIDF_MAX_FEATURES,
-    )
-    tfidf_train = vectorizer.fit_transform(domains_train).toarray()
-    tfidf_test = vectorizer.transform(domains_test).toarray()
+    if use_tfidf:
+        print("\n--- Fitting TF-IDF on character n-grams (train domains only) ---")
+        vectorizer = TfidfVectorizer(
+            analyzer="char",
+            ngram_range=TFIDF_NGRAM_RANGE,
+            max_features=TFIDF_MAX_FEATURES,
+        )
+        tfidf_train = vectorizer.fit_transform(domains_train).toarray()
+        tfidf_test = vectorizer.transform(domains_test).toarray()
 
-    X_train = np.hstack([X_train, tfidf_train])
-    X_test = np.hstack([X_test, tfidf_test])
-    print(f"Combined feature shape: train={X_train.shape}, test={X_test.shape}")
+        X_train = np.hstack([X_train, tfidf_train])
+        X_test = np.hstack([X_test, tfidf_test])
+        print(f"Combined feature shape: train={X_train.shape}, test={X_test.shape}")
 
-    VECTORIZER_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(vectorizer, VECTORIZER_PATH)
+        vectorizer_path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(vectorizer, vectorizer_path)
+    else:
+        print("Skipping TF-IDF")
 
     print("\n--- Benchmarking Baseline Models ---")
     baseline_results = evaluate_baselines(X_train, X_test, y_train, y_test)
