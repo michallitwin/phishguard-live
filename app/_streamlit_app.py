@@ -27,35 +27,43 @@ MODEL_OPTIONS = {
     "Gradient Boosting": "gradient_boosting",
 }
 
-
 @st.cache_resource
 def load_base_assets():
     profiles = json.loads(PROFILES_CONFIG.read_text(encoding="utf-8"))
     le = joblib.load(PROFILES_DIR / "label_encoder.joblib")
     return profiles, le
 
-
 @st.cache_resource
-def load_model(model_slug: str, profile_name: str):
-    model_path = PROFILES_DIR / f"{model_slug}_{profile_name}.joblib"
+def load_model(model_slug: str, profile_name: str, tfidf_tag: str):
+    model_path = PROFILES_DIR / f"{model_slug}_{profile_name}_{tfidf_tag}.joblib"
     if not model_path.exists():
         raise FileNotFoundError(f"Cannot find model: {model_path.name}")
     return joblib.load(model_path)
+
+
+@st.cache_resource
+def load_vectorizer(profile_name: str):
+    """Loads the pre-fitted TF-IDF vectorizer for a given feature profile."""
+    path = PROFILES_DIR / f"vectorizer_{profile_name}.joblib"
+    return joblib.load(path)
 
 
 profiles, le = load_base_assets()
 extractor = DomainFeatureExtractor()
 phishing_idx = list(le.classes_).index("phishing")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     selected_model_label = st.selectbox("Pick Model", list(MODEL_OPTIONS.keys()))
 with col2:
     selected_profile = st.selectbox("Feature Profile", list(profiles.keys()))
+with col3:
+    use_tfidf = st.checkbox("Use TF-IDF", value=True)
 
+tfidf_tag = "tfidf" if use_tfidf else "notfidf"
 model_slug = MODEL_OPTIONS[selected_model_label]
-model = load_model(model_slug, selected_profile)
 feature_cols = profiles[selected_profile]
+model = load_model(model_slug, selected_profile, tfidf_tag)
 
 domain = st.text_input("Enter a domain to check", placeholder="e.g. paypal-verify-login.tk")
 
@@ -64,7 +72,14 @@ if st.button("Check", type="primary") and domain:
         st.warning("⚠️ Please enter a valid domain (e.g. example.com)")
     else:
         all_features = extractor.extract(domain)
-        X = np.array([[all_features[col] for col in feature_cols]])
+        structured = np.array([[all_features[col] for col in feature_cols]])
+
+        if use_tfidf:
+            vectorizer = load_vectorizer(selected_profile)
+            tfidf_vec = vectorizer.transform([domain]).toarray()
+            X = np.hstack([structured, tfidf_vec])
+        else:
+            X = structured
 
         prediction = model.predict(X)
         proba = model.predict_proba(X)[0][phishing_idx]
@@ -82,4 +97,4 @@ if st.button("Check", type="primary") and domain:
         )
 
 st.divider()
-st.caption(f"Active Model: {selected_model_label} · Profile: {selected_profile} · Data: OpenPhish + Tranco Top 1M")
+st.caption(f"Active Model: {selected_model_label} · Profile: {selected_profile} · TF-IDF: {'on' if use_tfidf else 'off'} · Data: OpenPhish + Tranco Top 1M")
