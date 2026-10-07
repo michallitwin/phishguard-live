@@ -9,11 +9,12 @@ supervised classifier instead of relying on rules or an LLM call.
 ## What it does
 
 Extracts structural features from a domain name (length, brand similarity,
-suspicious TLD, keyword patterns), scores it with a trained model, and
-returns a phishing probability via a REST API. A separate Streamlit demo
-lets you interactively compare different model architectures (Gradient
-Boosting, Random Forest, XGBoost) and feature profiles (`minimal3`,
-`core6`, `extended9`) side by side.
+suspicious TLD, keyword patterns) plus 100 character n-gram (TF-IDF)
+features learned automatically from the training data, scores it with a
+trained model, and returns a phishing probability via a REST API. A
+separate Streamlit demo lets you interactively compare different model
+architectures (Gradient Boosting, Random Forest, XGBoost) and feature
+profiles (`minimal3`, `core6`, `extended9`) side by side.
 
 ## Architecture: production vs. exploration
 
@@ -30,7 +31,9 @@ Boosting, Random Forest, XGBoost) and feature profiles (`minimal3`,
 - Baseline comparison: Logistic Regression, Random Forest, Gradient
   Boosting, SVM, Decision Tree, XGBoost → **Gradient Boosting** selected
 - Tuned via GridSearchCV (5-fold stratified CV)
-- Test set: **ROC-AUC 0.89**, F1 0.81 (phishing class)
+- 106 total features: 6 structured + 100 TF-IDF character n-grams
+- Test set: **ROC-AUC 0.93**, F1 0.80 (phishing class)
+- Manual regression test set (19 known domains): **89% accuracy**
 - Full EDA, PCA, and DBSCAN outlier analysis in `notebooks/eda.ipynb`
 
 Metrics are regenerated automatically on every training run (see
@@ -60,6 +63,27 @@ detection only checked the last dot-separated segment of a domain, so
 multi-part suspicious hosts like `pages.dev` or `blogspot.com` were never
 matched. Fixed by checking whether the domain ends with any configured
 suffix instead of an exact last-segment match.
+
+## Adding TF-IDF character n-grams
+
+To improve detection of short phishing domains without a strong brand
+match (e.g. `googl3.scam`), 100 character n-gram (2-4 chars) TF-IDF
+features were added alongside the existing structured features, fit only
+on training-set domains to avoid data leakage into the test set.
+
+While validating the resulting model on a fixed 19-domain manual
+regression test (`app/_manual_eval.py`), an initial run showed a large
+jump in accuracy (78.9% → 94.7%). Investigating the top-weighted n-grams
+revealed a data collection artifact: 22.1% of phishing domains contained
+a literal "www." prefix versus only 0.05% of legitimate domains — a side
+effect of phishing domains being extracted from full URLs (`urlparse`)
+while legitimate domains come from Tranco's bare-domain list. Fixed by
+stripping the "www." prefix during domain extraction and rebuilding the
+dataset. The verified, artifact-free result: accuracy improved from 68.4%
+to **89%** on the manual test set, a genuine gain rather than an inflated one.
+
+TF-IDF features are included both in the production model and in the
+Streamlit exploration set, fit independently per feature profile.
 
 ## Configuration sources
 
@@ -94,6 +118,12 @@ references rather than picked arbitrarily:
   is a deliberate part of the Streamlit demo: comparing architectures
   side-by-side surfaces real differences in stability that a single
   aggregate metric (F1/AUC) can hide.
+  - Brand similarity alone, without a suspicious TLD or keyword to
+  reinforce it, is not always enough to trigger a phishing classification
+  (e.g. `googl3.com` on a safe `.com` TLD scores as legit on some
+  model/profile combinations) — the training data rarely contains
+  typosquatting without an accompanying suspicious TLD or keyword, so the
+  model under-weights this combination on its own.
 
 ## Run it
 
@@ -190,6 +220,13 @@ config/
 ├── features.json # brand list, suspicious TLDs/hosts, keywords
 
 └── feature_profiles.json # named feature-column subsets
+models/
+
+├── phishing_model.joblib # production model (gitignored, generated)
+
+├── tfidf_vectorizer.joblib # production TF-IDF vectorizer (gitignored, generated)
+
+└── profiles/ # 9 exploratory models + per-profile vectorizers (gitignored, generated)
 
 .github/workflows/ # CI pipeline
 

@@ -42,6 +42,10 @@ def load_model(model_slug: str, profile_name: str):
         raise FileNotFoundError(f"Cannot find model: {model_path.name}")
     return joblib.load(model_path)
 
+@st.cache_resource
+def load_vectorizer(profile_name: str):
+    path = PROFILES_DIR / f"vectorizer_{profile_name}.joblib"
+    return joblib.load(path)
 
 profiles, le = load_base_assets()
 extractor = DomainFeatureExtractor()
@@ -64,9 +68,13 @@ if st.button("Check", type="primary") and domain:
         st.warning("⚠️ Please enter a valid domain (e.g. example.com)")
     else:
         all_features = extractor.extract(domain)
-        X = np.array([[all_features[col] for col in feature_cols]])
+        structured = np.array([[all_features[col] for col in feature_cols]])
+        vectorizer = load_vectorizer(selected_profile)
+        tfidf_vec = vectorizer.transform([domain]).toarray()
+        X = np.hstack([structured, tfidf_vec])
 
         prediction = model.predict(X)
+        
         proba = model.predict_proba(X)[0][phishing_idx]
         label = le.inverse_transform(prediction)[0]
 
