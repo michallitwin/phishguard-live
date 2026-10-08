@@ -29,12 +29,15 @@ MODEL_OPTIONS = {
 
 @st.cache_resource
 def load_base_assets():
+    """Loads profile definitions and label encoder (cached, read once)."""
     profiles = json.loads(PROFILES_CONFIG.read_text(encoding="utf-8"))
     le = joblib.load(PROFILES_DIR / "label_encoder.joblib")
     return profiles, le
 
+
 @st.cache_resource
 def load_model(model_slug: str, profile_name: str, tfidf_tag: str):
+    """Loads one model: {model}_{profile}_{tfidf|notfidf}.joblib."""
     model_path = PROFILES_DIR / f"{model_slug}_{profile_name}_{tfidf_tag}.joblib"
     if not model_path.exists():
         raise FileNotFoundError(f"Cannot find model: {model_path.name}")
@@ -43,9 +46,8 @@ def load_model(model_slug: str, profile_name: str, tfidf_tag: str):
 
 @st.cache_resource
 def load_vectorizer(profile_name: str):
-    """Loads the pre-fitted TF-IDF vectorizer for a given feature profile."""
-    path = PROFILES_DIR / f"vectorizer_{profile_name}.joblib"
-    return joblib.load(path)
+    """Loads the TF-IDF vectorizer fitted on train data (transform only)."""
+    return joblib.load(PROFILES_DIR / f"vectorizer_{profile_name}.joblib")
 
 
 profiles, le = load_base_assets()
