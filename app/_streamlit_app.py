@@ -8,12 +8,9 @@ import numpy as np
 import joblib
 import streamlit as st
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROFILES_DIR = PROJECT_ROOT / "models" / "profiles"
-CONFIG_DIR = PROJECT_ROOT / "config"
-PROFILES_CONFIG = CONFIG_DIR / "feature_profiles.json"
-
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import FEATURE_PROFILES_PATH as PROFILES_CONFIG
+from src.config import PROFILES_DIR
 from src.features.extractor import DomainFeatureExtractor
 
 st.set_page_config(page_title="PhishGuard Live", page_icon="🛡️")

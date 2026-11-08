@@ -16,12 +16,14 @@ PROFILES_DIR = MODELS_DIR / "profiles"
 
 # Data
 DATASET_PATH = DATA_DIR / "processed" / "dataset.csv"
+TRANCO_CACHE_PATH = DATA_DIR / "raw" / "tranco_top1m.csv"
 
 # Production model artifacts
 MODEL_PATH = MODELS_DIR / "phishing_model.joblib"
 ENCODER_PATH = MODELS_DIR / "label_encoder.joblib"
 VECTORIZER_PATH = MODELS_DIR / "tfidf_vectorizer.joblib"
 METRICS_PATH = MODELS_DIR / "metrics.json"
+MANUAL_EVAL_LOG_PATH = MODELS_DIR / "test_manual_eval_log.json"
 
 # Config files
 MODEL_CONFIG_PATH = CONFIG_DIR / "model_config.json"
