@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 
 from src.api.schemas import DomainRequest, ScoreResponse, HealthResponse
+from src.config import METRICS_PATH
 from src.ml.predict import load_artifacts, score_domain
 import uvicorn
 from src.api.schemas import ModelMetricsResponse
-from pathlib import Path
 import json
 
 
@@ -13,8 +13,6 @@ app = FastAPI(
     description="Detects phishing domains using a trained ML model.",
     version="0.1.0",
 )
-
-METRICS_PATH = Path("models/metrics.json")
 
 model, le, vectorizer = load_artifacts()
 

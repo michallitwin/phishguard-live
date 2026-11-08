@@ -13,17 +13,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import f1_score, roc_auc_score
+from src.config import DATASET_PATH, FEATURE_PROFILES_PATH, PROFILES_DIR
 from src.ml.train import tune_model, get_candidate_models, PARAM_GRIDS, RANDOM_STATE
 import numpy as np
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
-PROFILES_PATH = PROJECT_ROOT / "config" / "feature_profiles.json"
-OUT_DIR = PROJECT_ROOT / "models" / "profiles"
+OUT_DIR = PROFILES_DIR
 
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 df = pd.read_csv(DATASET_PATH)
-profiles = json.loads(PROFILES_PATH.read_text(encoding="utf-8"))
+profiles = json.loads(FEATURE_PROFILES_PATH.read_text(encoding="utf-8"))
 
 le = LabelEncoder()
 y = le.fit_transform(df["label"])

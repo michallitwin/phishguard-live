@@ -1,13 +1,9 @@
-from pathlib import Path
-
 import joblib
 import numpy as np
 
+from src.config import ENCODER_PATH, MODEL_PATH, VECTORIZER_PATH
 from src.features.extractor import extract_features
 
-MODEL_PATH = Path("models/phishing_model.joblib")
-ENCODER_PATH = Path("models/label_encoder.joblib")
-VECTORIZER_PATH = Path("models/tfidf_vectorizer.joblib")
 
 
 

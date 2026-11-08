@@ -21,14 +21,16 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from src.config import (
+    DATASET_PATH,
+    ENCODER_PATH,
+    METRICS_PATH,
+    MODEL_CONFIG_PATH,
+    MODEL_PATH,
+    VECTORIZER_PATH,
+)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
-MODEL_PATH = PROJECT_ROOT / "models" / "phishing_model.joblib"
-ENCODER_PATH = PROJECT_ROOT / "models" / "label_encoder.joblib"
-METRICS_PATH = PROJECT_ROOT / "models" / "metrics.json"
-VECTORIZER_PATH = PROJECT_ROOT / "models" / "tfidf_vectorizer.joblib"  
-MODEL_CONFIG_PATH = PROJECT_ROOT / "config" / "model_config.json"
+
 
 with open(MODEL_CONFIG_PATH, "r", encoding="utf-8") as f:
     _config = json.load(f)
