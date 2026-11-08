@@ -238,10 +238,9 @@ def run_pipeline(
     print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     print(f"Dataset shape: {X.shape}")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
-    domains_train, domains_test = train_test_split(
-        domains, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+    # One split for features, domains and labels -> rows stay aligned.
+    X_train, X_test, domains_train, domains_test, y_train, y_test = train_test_split(
+        X, domains, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
 
     if use_tfidf:
         print("\n--- Fitting TF-IDF on character n-grams (train domains only) ---")
