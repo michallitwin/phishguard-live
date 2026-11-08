@@ -46,7 +46,7 @@ def load_model(model_slug: str, profile_name: str, tfidf_tag: str):
 
 @st.cache_resource
 def load_vectorizer(profile_name: str):
-    """Loads the TF-IDF vectorizer fitted on train data (transform only)."""
+    """Load the TF-IDF vectorizer fitted on the training data only; here it is used with transform(), never fit(), to avoid data leakage."""
     return joblib.load(PROFILES_DIR / f"vectorizer_{profile_name}.joblib")
 
 
