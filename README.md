@@ -117,3 +117,11 @@ tests/
 ```bash
 uv run pytest -v
 ```
+
+## 👤 Author
+
+**Michał Litwin** · [LinkedIn](https://www.linkedin.com/in/mlitwin1/) · [GitHub](https://github.com/michallitwin)
+
+Also see [TechNova RAG Agent](https://github.com/michallitwin/technova-rag-agent), an LLM support agent with RAG, SQL tools and evaluation.
+
+License: [MIT](LICENSE)
