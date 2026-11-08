@@ -21,14 +21,16 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from src.config import (
+    DATASET_PATH,
+    ENCODER_PATH,
+    METRICS_PATH,
+    MODEL_CONFIG_PATH,
+    MODEL_PATH,
+    VECTORIZER_PATH,
+)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
-MODEL_PATH = PROJECT_ROOT / "models" / "phishing_model.joblib"
-ENCODER_PATH = PROJECT_ROOT / "models" / "label_encoder.joblib"
-METRICS_PATH = PROJECT_ROOT / "models" / "metrics.json"
-VECTORIZER_PATH = PROJECT_ROOT / "models" / "tfidf_vectorizer.joblib"  
-MODEL_CONFIG_PATH = PROJECT_ROOT / "config" / "model_config.json"
+
 
 with open(MODEL_CONFIG_PATH, "r", encoding="utf-8") as f:
     _config = json.load(f)
@@ -236,10 +238,9 @@ def run_pipeline(
     print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     print(f"Dataset shape: {X.shape}")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
-    domains_train, domains_test = train_test_split(
-        domains, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+    # One split for features, domains and labels -> rows stay aligned.
+    X_train, X_test, domains_train, domains_test, y_train, y_test = train_test_split(
+        X, domains, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
 
     if use_tfidf:
         print("\n--- Fitting TF-IDF on character n-grams (train domains only) ---")

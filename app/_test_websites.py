@@ -5,11 +5,10 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.config import MANUAL_EVAL_LOG_PATH as LOG_PATH
 from src.ml.predict import load_artifacts, score_domain
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-LOG_PATH = PROJECT_ROOT / "models" / "test_manual_eval_log.json"
 
 
 TEST_SET = [

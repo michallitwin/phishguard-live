@@ -1,12 +1,12 @@
-from pathlib import Path
 import random
 import pandas as pd
 
+from src.config import DATASET_PATH
 from src.data.openphish import fetch_phishing_domains
 from src.data.tranco import load_tranco_domains
 from src.features.extractor import extract_features
 
-OUTPUT_PATH = Path("data/processed/dataset.csv")
+OUTPUT_PATH = DATASET_PATH
 
 
 LEGIT_SAMPLE_SIZE = 2000

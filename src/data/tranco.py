@@ -1,12 +1,13 @@
 import io
 import zipfile
-from pathlib import Path
 
 import pandas as pd
 import requests
 
+from src.config import TRANCO_CACHE_PATH
+
 TRANCO_URL = "https://tranco-list.eu/top-1m.csv.zip"
-CACHE_PATH = Path("data/raw/tranco_top1m.csv")
+CACHE_PATH = TRANCO_CACHE_PATH
 
 
 def download_tranco_list() -> pd.DataFrame:
