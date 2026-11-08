@@ -16,7 +16,7 @@ app = FastAPI(
 
 METRICS_PATH = Path("models/metrics.json")
 
-model, le = load_artifacts()
+model, le, vectorizer = load_artifacts()
 
 @app.get("/health", response_model=HealthResponse)
 def healthy() -> dict:
@@ -28,7 +28,7 @@ def healthy() -> dict:
 
 @app.post("/api/score", response_model=ScoreResponse)
 def score(request: DomainRequest) -> dict:
-    result = score_domain(request.domain, model, le)
+    result = score_domain(request.domain, model, le, vectorizer)
     return result
 
 @app.get("/api/model/metrics", response_model=ModelMetricsResponse)

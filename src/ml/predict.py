@@ -7,6 +7,9 @@ from src.features.extractor import extract_features
 
 MODEL_PATH = Path("models/phishing_model.joblib")
 ENCODER_PATH = Path("models/label_encoder.joblib")
+VECTORIZER_PATH = Path("models/tfidf_vectorizer.joblib")
+
+
 
 FEATURE_COLUMNS = [
     "length",
@@ -20,22 +23,30 @@ FEATURE_COLUMNS = [
 PHISHING_THRESHOLD = 0.25
 
 def load_artifacts() -> tuple:
-    """
-    Loads the trained model and label encoder from disk.
-    """
+    """Loads the trained model, label encoder, and TF-IDF vectorizer from disk."""
     model = joblib.load(MODEL_PATH)
     le = joblib.load(ENCODER_PATH)
-    return model, le
+    vectorizer = joblib.load(VECTORIZER_PATH)
+    return model, le, vectorizer
 
 
-def score_domain(domain: str, model, le) -> dict:
-    """
-    Extracts features from a domain and predicts its phishing probability.
+def score_domain(domain: str, model, le, vectorizer) -> dict:
+    """Extracts features from a domain and predicts its phishing probability.
+
+    Args:
+        domain: raw domain string to classify, e.g. "paypal-verify.tk".
+        model: trained classifier exposing predict_proba().
+        le: LabelEncoder used to map "legit"/"phishing" during training.
+        vectorizer: fitted TfidfVectorizer producing character n-gram
+            features; must be the same instance saved alongside the model.
     """
     features = extract_features(domain)
-    X = np.array([[features[col] for col in FEATURE_COLUMNS]])
-    probabilities = model.predict_proba(X)
+    structured = np.array([[features[col] for col in FEATURE_COLUMNS]])
 
+    tfidf_vec = vectorizer.transform([domain]).toarray()
+    X = np.hstack([structured, tfidf_vec])
+    
+    probabilities = model.predict_proba(X)
     phishing_proba = probabilities[0][1]
     label = "phishing" if phishing_proba >= PHISHING_THRESHOLD else "legit"
 

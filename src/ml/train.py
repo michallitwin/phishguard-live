@@ -19,6 +19,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -26,17 +27,17 @@ DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "dataset.csv"
 MODEL_PATH = PROJECT_ROOT / "models" / "phishing_model.joblib"
 ENCODER_PATH = PROJECT_ROOT / "models" / "label_encoder.joblib"
 METRICS_PATH = PROJECT_ROOT / "models" / "metrics.json"
+VECTORIZER_PATH = PROJECT_ROOT / "models" / "tfidf_vectorizer.joblib"  
+MODEL_CONFIG_PATH = PROJECT_ROOT / "config" / "model_config.json"
 
+with open(MODEL_CONFIG_PATH, "r", encoding="utf-8") as f:
+    _config = json.load(f)
 
-FEATURE_COLUMNS = [
-    "length",
-    "digits",
-    "hyphens",
-    "brand_sim",
-    "suspicious_tld",
-    "keywords",
-]
-RANDOM_STATE = 42
+RANDOM_STATE = _config["random_state"]
+FEATURE_COLUMNS = _config["feature_columns"]
+TFIDF_MAX_FEATURES = _config["tfidf"]["max_features"]
+TFIDF_NGRAM_RANGE = tuple(_config["tfidf"]["ngram_range"])
+
 
 PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
     "Gradient Boosting": {
@@ -50,6 +51,7 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "n_estimators": [100, 200],
         "max_depth": [10, 20, None],
         "min_samples_split": [2, 5],
+        "max_features": ["sqrt", "log2", None],
     },
     "Logistic Regression": {
         "C": [0.01, 0.1, 1.0, 10.0],
@@ -63,6 +65,8 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "n_estimators": [100,200],
         "max_depth": [3,5,7],
         "learning_rate": [0.05, 0.1, 0.2],
+        "reg_alpha": [0, 0.1, 1.0],
+        "reg_lambda": [1.0, 5.0, 10.0],
     },
     "Decision Tree": {
         "max_depth": [3, 5, 10, None],
@@ -74,14 +78,15 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
 
 def load_data(
     dataset_path: Path = DATASET_PATH,
-    feature_columns: list[str] = FEATURE_COLUMNS
-    ) -> tuple[np.ndarray, np.ndarray, LabelEncoder]:
-    """Loads dataset, extracts feature matrix, and encodes target labels."""
+    feature_columns: list[str] = FEATURE_COLUMNS,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, LabelEncoder]:
+    """Loads dataset, extracts feature matrix, domains, and encodes target labels."""
     df = pd.read_csv(dataset_path)
     X = df[feature_columns].values
+    domains = df["domain"].astype(str).to_numpy(dtype=object)
     le = LabelEncoder()
     y = le.fit_transform(df["label"])
-    return X, y, le
+    return X, domains, y, le
 
 
 def get_candidate_models() -> dict[str, BaseEstimator]:
@@ -223,15 +228,37 @@ def run_pipeline(
         model_path: Path = MODEL_PATH,
         encoder_path: Path = ENCODER_PATH,
         metrics_path: Path = METRICS_PATH,
+        vectorizer_path: Path = VECTORIZER_PATH,
+        use_tfidf: bool = True,
     ) -> None:
     """Orchestrates data loading, benchmarking, tuning, and evaluation."""
-    X, y, le = load_data(dataset_path, feature_columns)
+    X, domains, y, le = load_data(dataset_path, feature_columns)
     print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     print(f"Dataset shape: {X.shape}")
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y,
-    )
+        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+    domains_train, domains_test = train_test_split(
+        domains, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+
+    if use_tfidf:
+        print("\n--- Fitting TF-IDF on character n-grams (train domains only) ---")
+        vectorizer = TfidfVectorizer(
+            analyzer="char",
+            ngram_range=TFIDF_NGRAM_RANGE,
+            max_features=TFIDF_MAX_FEATURES,
+        )
+        tfidf_train = vectorizer.fit_transform(domains_train).toarray()
+        tfidf_test = vectorizer.transform(domains_test).toarray()
+
+        X_train = np.hstack([X_train, tfidf_train])
+        X_test = np.hstack([X_test, tfidf_test])
+        print(f"Combined feature shape: train={X_train.shape}, test={X_test.shape}")
+
+        vectorizer_path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(vectorizer, vectorizer_path)
+    else:
+        print("Skipping TF-IDF")
 
     print("\n--- Benchmarking Baseline Models ---")
     baseline_results = evaluate_baselines(X_train, X_test, y_train, y_test)

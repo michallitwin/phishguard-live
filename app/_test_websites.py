@@ -41,13 +41,13 @@ TEST_SET = [
     ("microsoft.com", "legit"),
 ]
 
-model, le = load_artifacts()
+model, le, vectorizer = load_artifacts()
 
 results = []
 correct = 0
 
 for domain, expected in TEST_SET:
-    result = score_domain(domain, model, le)
+    result = score_domain(domain, model, le, vectorizer)
     predicted = result["prediction"]
     is_correct = predicted == expected
     correct += is_correct
