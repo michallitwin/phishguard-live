@@ -1,12 +1,11 @@
-from fastapi import FastAPI
-
-from src.api.schemas import DomainRequest, ScoreResponse, HealthResponse
-from src.config import METRICS_PATH
-from src.ml.predict import load_artifacts, score_domain
-import uvicorn
-from src.api.schemas import ModelMetricsResponse
 import json
 
+import uvicorn
+from fastapi import FastAPI
+
+from src.api.schemas import DomainRequest, HealthResponse, ModelMetricsResponse, ScoreResponse
+from src.config import METRICS_PATH
+from src.ml.predict import load_artifacts, score_domain
 
 app = FastAPI(
     title="PhishGuard Live API",

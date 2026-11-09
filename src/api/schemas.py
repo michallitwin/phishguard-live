@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
+
+from pydantic import BaseModel, Field, field_validator
 
 from src.features.extractor import DomainFeatureExtractor
 

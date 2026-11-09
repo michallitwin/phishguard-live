@@ -4,9 +4,6 @@ import numpy as np
 from src.config import ENCODER_PATH, MODEL_PATH, VECTORIZER_PATH
 from src.features.extractor import extract_features
 
-
-
-
 FEATURE_COLUMNS = [
     "length",
     "digits",

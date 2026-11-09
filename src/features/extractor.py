@@ -1,11 +1,11 @@
-import Levenshtein
 import json
-from typing import Any
-from pathlib import Path
-from difflib import SequenceMatcher
-import jellyfish
 import re
+from difflib import SequenceMatcher
+from pathlib import Path
+from typing import Any
 
+import jellyfish
+import Levenshtein
 
 DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "features.json"

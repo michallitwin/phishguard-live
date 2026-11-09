@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      - name: Lint with Ruff
+        run: uvx ruff@0.14.0 check .
+
       - name: Run unit tests
         run: uv run pytest tests/
          

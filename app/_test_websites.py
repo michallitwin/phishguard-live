@@ -1,15 +1,12 @@
-import sys
 import json
-from pathlib import Path
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.config import MANUAL_EVAL_LOG_PATH as LOG_PATH
 from src.ml.predict import load_artifacts, score_domain
-
-
-
 
 TEST_SET = [
     # --- phishing: SHORT (testing if length bias causes misses) ---
