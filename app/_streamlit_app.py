@@ -1,11 +1,12 @@
 """Web interface for checking domains for phishing indicators.
 Dynamically loads models from models/profiles/ and feature profiles from config/.
 """
-import sys
 import json
+import sys
 from pathlib import Path
-import numpy as np
+
 import joblib
+import numpy as np
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

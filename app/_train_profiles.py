@@ -3,6 +3,7 @@ tuning) separately for each feature profile (core6/extended9/minimal3), with
 and without TF-IDF. Saves each variant to models/profiles/ for use in the
 Streamlit demo — does NOT touch the production model."""
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -18,6 +19,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.config import DATASET_PATH, FEATURE_PROFILES_PATH, PROFILES_DIR
 from src.ml.train import PARAM_GRIDS, RANDOM_STATE, get_candidate_models, tune_model
+
+logger = logging.getLogger(__name__)
 
 TARGET_MODELS = ["Gradient Boosting", "Random Forest", "XGBoost"]
 TEST_SIZE = 0.2
@@ -112,14 +115,15 @@ def main() -> None:
                 metrics = evaluate_model(grid.best_estimator_, X_test_final, y_test, phishing_idx)
 
                 results[profile_name][tfidf_tag][model_name] = {"best_params": grid.best_params_, **metrics}
-                print(
-                    f"[{model_name}][{tfidf_tag}] F1={metrics['f1_phishing']:.3f} "
-                    f"AUC={metrics['roc_auc']:.3f} -> Saved: {filename}"
+                logger.info(
+                    "[%s][%s] F1=%.3f AUC=%.3f -> Saved: %s",
+                    model_name, tfidf_tag, metrics["f1_phishing"], metrics["roc_auc"], filename,
                 )
 
     (PROFILES_DIR / "profiles_metrics.json").write_text(json.dumps(results, indent=2))
-    print(f"\nAll models saved successfully in {PROFILES_DIR}/")
+    logger.info("All models saved successfully in %s/", PROFILES_DIR)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     main()

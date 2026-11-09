@@ -1,12 +1,15 @@
 import json
+import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from datetime import datetime, timezone
+
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     classification_report,
@@ -19,7 +22,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 from src.config import (
     DATASET_PATH,
@@ -29,6 +31,8 @@ from src.config import (
     MODEL_PATH,
     VECTORIZER_PATH,
 )
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -143,7 +147,7 @@ def evaluate_baselines(
         y_pred = model.predict(X_test_scaled)
         score = float(f1_score(y_test, y_pred))
         results[name] = score
-        print(f"[{name}] F1(phishing) = {score:.4f}")
+        logger.info("[%s] F1(phishing) = %.4f", name, score)
 
     return results
 
@@ -171,8 +175,8 @@ def tune_model(
     )
 
     grid.fit(X_train, y_train)
-    print(f"Best params: {grid.best_params_}")
-    print(f"Best CV score (F1): {grid.best_score_:.4f}")
+    logger.info("Best params: %s", grid.best_params_)
+    logger.info("Best CV score (F1): %.4f", grid.best_score_)
 
     return grid
 
@@ -185,12 +189,12 @@ def final_evaluation(
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
 
-    print("\n--- Final Evaluation (Test Set) ---")
-    print(
-        classification_report(y_test, y_pred, target_names=["legit", "phishing"])
+    logger.info("--- Final Evaluation (Test Set) ---")
+    logger.info(
+        "\n%s", classification_report(y_test, y_pred, target_names=["legit", "phishing"])
     )
-    print(f"ROC-AUC: {roc_auc_score(y_test, y_proba):.4f}")
-    print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+    logger.info("ROC-AUC: %.4f", roc_auc_score(y_test, y_proba))
+    logger.info("Confusion Matrix:\n%s", confusion_matrix(y_test, y_pred))
 
     return y_pred, y_proba
 
@@ -213,7 +217,7 @@ def save_metrics(
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
-    print(f"Metrics saved successfully to: {output_path}")
+    logger.info("Metrics saved successfully to: %s", output_path)
 
 
 def save_artifacts(model, le, model_path=MODEL_PATH, encoder_path = ENCODER_PATH) -> None:
@@ -221,7 +225,7 @@ def save_artifacts(model, le, model_path=MODEL_PATH, encoder_path = ENCODER_PATH
     model_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, model_path)
     joblib.dump(le, encoder_path)
-    print(f"\nArtifacts saved successfully to: {model_path.parent}/")
+    logger.info("Artifacts saved successfully to: %s/", model_path.parent)
 
 
 def run_pipeline(
@@ -235,15 +239,15 @@ def run_pipeline(
     ) -> None:
     """Orchestrates data loading, benchmarking, tuning, and evaluation."""
     X, domains, y, le = load_data(dataset_path, feature_columns)
-    print(f"Classes: {dict(zip(le.classes_, le.transform(le.classes_)))}")
-    print(f"Dataset shape: {X.shape}")
+    logger.info("Classes: %s", dict(zip(le.classes_, le.transform(le.classes_), strict=False)))
+    logger.info("Dataset shape: %s", X.shape)
 
     # One split for features, domains and labels -> rows stay aligned.
     X_train, X_test, domains_train, domains_test, y_train, y_test = train_test_split(
         X, domains, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
 
     if use_tfidf:
-        print("\n--- Fitting TF-IDF on character n-grams (train domains only) ---")
+        logger.info("--- Fitting TF-IDF on character n-grams (train domains only) ---")
         vectorizer = TfidfVectorizer(
             analyzer="char",
             ngram_range=TFIDF_NGRAM_RANGE,
@@ -254,20 +258,20 @@ def run_pipeline(
 
         X_train = np.hstack([X_train, tfidf_train])
         X_test = np.hstack([X_test, tfidf_test])
-        print(f"Combined feature shape: train={X_train.shape}, test={X_test.shape}")
+        logger.info("Combined feature shape: train=%s, test=%s", X_train.shape, X_test.shape)
 
         vectorizer_path.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(vectorizer, vectorizer_path)
     else:
-        print("Skipping TF-IDF")
+        logger.info("Skipping TF-IDF")
 
-    print("\n--- Benchmarking Baseline Models ---")
+    logger.info("--- Benchmarking Baseline Models ---")
     baseline_results = evaluate_baselines(X_train, X_test, y_train, y_test)
 
     best_model_name = max(baseline_results, key=baseline_results.get)
-    print(f"\nSelected best baseline model: {best_model_name}")
+    logger.info("Selected best baseline model: %s", best_model_name)
 
-    print(f"\n--- Hyperparameter Tuning: {best_model_name} ---")
+    logger.info("--- Hyperparameter Tuning: %s ---", best_model_name)
     candidate_models = get_candidate_models()
     best_estimator = candidate_models[best_model_name]
     param_grid = PARAM_GRIDS.get(best_model_name, {})

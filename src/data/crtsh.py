@@ -1,5 +1,9 @@
+import logging
 import time
+
 import requests
+
+logger = logging.getLogger(__name__)
 
 CRTSH_URL = "https://crt.sh/"
 MONITORED_BRANDS = ["paypal", "allegro", "inpost", "santander", "google"]
@@ -34,7 +38,7 @@ def query_crtsh(
             return response.json()
 
         except (requests.exceptions.RequestException, ValueError) as e:
-            print(f"[Attempt {attempt}/{retries}] crt.sh did not respond: {e}")
+            logger.warning("[Attempt %d/%d] crt.sh did not respond: %s", attempt, retries, e)
             if attempt < retries:
                 time.sleep(3) 
 
@@ -42,11 +46,12 @@ def query_crtsh(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     search_query = "inpost.pl"
-    print(f"Sending query to crt.sh for: {search_query}...")
+    logger.info("Sending query to crt.sh for: %s...", search_query)
 
     result = query_crtsh(search_query)
-    print(f"Found {len(result)} records for '{search_query}'")
+    logger.info("Found %d records for '%s'", len(result), search_query)
 
     if result:
-        print("First record:", result[0])
+        logger.info("First record: %s", result[0])

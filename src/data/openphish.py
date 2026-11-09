@@ -1,6 +1,6 @@
-import requests
 from urllib.parse import urlparse
 
+import requests
 
 FEED_URL = "https://openphish.com/feed.txt"
 
