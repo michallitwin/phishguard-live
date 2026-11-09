@@ -58,7 +58,7 @@ uv run app/_train_models.py
 docker compose up --build        # API docs: http://localhost:8000/docs
 ```
 
-Streamlit demo:
+Streamlit demo (needs the dataset from the step above; the 18 models are not stored in the repo, so train them once):
 ```bash
 uv run app/_train_profiles.py    # one-time, trains the 18 variants
 uv run streamlit run app/_streamlit_app.py
