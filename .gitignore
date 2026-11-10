@@ -6,6 +6,7 @@ data/processed/
 .ipynb_checkpoints/
 .DS_Store
 models/*.joblib
+profile_models.zip
 models/profiles/
 models/profiles/*.joblib
 !models/phishing_model.joblib

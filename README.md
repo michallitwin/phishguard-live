@@ -114,6 +114,8 @@ tests/
 
 ## ✅ Tests
 
+13 tests: 7 unit tests for the feature extractor and 6 API tests with FastAPI `TestClient` (health check, valid domain, invalid domains → 422, metrics). CI on GitHub Actions runs Ruff and pytest on every push and pull request.
+
 ```bash
 uv run pytest -v
 ```
