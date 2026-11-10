@@ -11,6 +11,8 @@ A trained classifier with a full ML lifecycle, not a static dataset or an LLM wr
 ![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
 ![Docker](https://img.shields.io/badge/deploy-Docker-2496ED)
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://phishguard-live.streamlit.app/)
+
 </div>
 
 ## 📊 Results
@@ -43,6 +45,8 @@ flowchart LR
 - **Features (106)**: length, digits, hyphens, brand similarity, suspicious TLD, phishing keywords + 100 character n-grams (TF-IDF).
 
 ## 🖥️ Live demo
+
+**Try it in your browser: [phishguard-live.streamlit.app](https://phishguard-live.streamlit.app/)** (no install needed; the app may take a few seconds to wake up).
 
 ![Streamlit demo](docs/streamlit-demo.png)
 

@@ -109,7 +109,7 @@ if st.button("Check", type="primary") and domain:
 
         st.progress(float(proba))
         st.caption(
-            f"Engine: **{selected_model_label}** | Profile: **{selected_profile}** ({len(feature_cols)} cech) | "
+            f"Engine: **{selected_model_label}** | Profile: **{selected_profile}** ({len(feature_cols)} features) | "
             f"Features: `{', '.join(feature_cols)}`"
         )
 
