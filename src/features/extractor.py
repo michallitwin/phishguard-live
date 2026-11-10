@@ -105,6 +105,8 @@ class DomainFeatureExtractor:
             "digits": self._count_digits(domain),
             "hyphens": self._count_hyphens(domain),
             "brand_sim": round(self._brand_similarity(domain), 4),
+            # Exploratory brand-similarity variants: compared in the EDA notebook,
+            # not used by the production model (see config/model_config.json).
             "brand_sim_jaro": round(self._brand_similarity_jaro(domain), 4),
             "brand_sim_seqmatch": round(self._brand_similarity_seqmatch(domain), 4),
             "brand_sim_ngram": round(self._brand_similarity_ngram(domain), 4),
