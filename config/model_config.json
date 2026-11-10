@@ -2,6 +2,7 @@
 
 {
   "random_state": 42,
+  "phishing_threshold": 0.25,
   "feature_columns": ["length", "digits", "hyphens", "brand_sim", "suspicious_tld", "keywords"],
   "tfidf": {
     "max_features": 100,

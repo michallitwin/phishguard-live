@@ -3,6 +3,7 @@
 Every path is built from PROJECT_ROOT (absolute), so scripts work no matter
 which folder they are run from. Import from here instead of redefining paths.
 """
+import json
 from pathlib import Path
 
 # src/config.py -> parents[0] = src/, parents[1] = project root
@@ -28,6 +29,10 @@ MANUAL_EVAL_LOG_PATH = MODELS_DIR / "test_manual_eval_log.json"
 # Config files
 MODEL_CONFIG_PATH = CONFIG_DIR / "model_config.json"
 FEATURE_PROFILES_PATH = CONFIG_DIR / "feature_profiles.json"
+
+# Model settings shared by training and serving (single source of truth,
+# so both always use the same feature columns, TF-IDF setup and threshold).
+MODEL_CONFIG = json.loads(MODEL_CONFIG_PATH.read_text(encoding="utf-8"))
 
 # Streamlit demo models (18 variants) are not stored in git; the app downloads
 # them once from this GitHub Release asset when models/profiles/ is empty.

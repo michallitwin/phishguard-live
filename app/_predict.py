@@ -17,6 +17,6 @@ test_domains = [
 ]
 
 for domain in test_domains:
-    result = score_domain(domain, model, le)
+    result = score_domain(domain, model, le, vectorizer)
     print(result)
      

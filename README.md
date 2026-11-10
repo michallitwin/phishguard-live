@@ -55,11 +55,18 @@ flowchart LR
 
 ## 🚀 Quick start
 
+The trained production model is included in the repo, so the API runs right away:
+
+```bash
+docker compose up --build        # API docs: http://localhost:8000/docs
+```
+
+Retrain from fresh data (optional):
+
 ```bash
 uv sync
-uv run app/_build_dataset.py
-uv run app/_train_models.py
-docker compose up --build        # API docs: http://localhost:8000/docs
+uv run app/_build_dataset.py     # pulls live OpenPhish + Tranco data
+uv run app/_train_models.py      # benchmarks, tunes and saves the production model
 ```
 
 Streamlit demo (needs the dataset from the step above; the 18 models are not stored in the repo, so train them once):
@@ -111,7 +118,7 @@ app/                     # entrypoint scripts
 ├── _train_profiles.py   # 18 exploratory models
 └── _streamlit_app.py
 src/                     # library code: data/ features/ ml/ api/
-config/                  # features.json, feature_profiles.json
+config/                  # features.json, feature_profiles.json, model_config.json
 notebooks/eda.ipynb
 tests/
 ```

@@ -27,7 +27,7 @@ from src.config import (
     DATASET_PATH,
     ENCODER_PATH,
     METRICS_PATH,
-    MODEL_CONFIG_PATH,
+    MODEL_CONFIG,
     MODEL_PATH,
     VECTORIZER_PATH,
 )
@@ -36,13 +36,10 @@ logger = logging.getLogger(__name__)
 
 
 
-with open(MODEL_CONFIG_PATH, "r", encoding="utf-8") as f:
-    _config = json.load(f)
-
-RANDOM_STATE = _config["random_state"]
-FEATURE_COLUMNS = _config["feature_columns"]
-TFIDF_MAX_FEATURES = _config["tfidf"]["max_features"]
-TFIDF_NGRAM_RANGE = tuple(_config["tfidf"]["ngram_range"])
+RANDOM_STATE = MODEL_CONFIG["random_state"]
+FEATURE_COLUMNS = MODEL_CONFIG["feature_columns"]
+TFIDF_MAX_FEATURES = MODEL_CONFIG["tfidf"]["max_features"]
+TFIDF_NGRAM_RANGE = tuple(MODEL_CONFIG["tfidf"]["ngram_range"])
 
 
 PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
