@@ -1,17 +1,20 @@
 """Web interface for checking domains for phishing indicators.
 Dynamically loads models from models/profiles/ and feature profiles from config/.
 """
+import io
 import json
 import sys
+import zipfile
 from pathlib import Path
 
 import joblib
 import numpy as np
+import requests
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.config import FEATURE_PROFILES_PATH as PROFILES_CONFIG
-from src.config import PROFILES_DIR
+from src.config import PROFILE_MODELS_URL, PROFILES_DIR
 from src.features.extractor import DomainFeatureExtractor
 
 st.set_page_config(page_title="PhishGuard Live", page_icon="🛡️")
@@ -24,6 +27,19 @@ MODEL_OPTIONS = {
     "Random Forest": "random_forest",
     "Gradient Boosting": "gradient_boosting",
 }
+
+@st.cache_resource
+def ensure_profile_models() -> None:
+    """Download the 18 demo models from the GitHub Release once, if they are missing locally."""
+    if (PROFILES_DIR / "label_encoder.joblib").exists():
+        return
+    with st.spinner("Downloading demo models (first start only)..."):
+        response = requests.get(PROFILE_MODELS_URL, timeout=60)
+        response.raise_for_status()
+        PROFILES_DIR.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+            archive.extractall(PROFILES_DIR)
+
 
 @st.cache_resource
 def load_base_assets():
@@ -48,6 +64,7 @@ def load_vectorizer(profile_name: str):
     return joblib.load(PROFILES_DIR / f"vectorizer_{profile_name}.joblib")
 
 
+ensure_profile_models()
 profiles, le = load_base_assets()
 extractor = DomainFeatureExtractor()
 phishing_idx = list(le.classes_).index("phishing")

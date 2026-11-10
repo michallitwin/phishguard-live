@@ -28,3 +28,9 @@ MANUAL_EVAL_LOG_PATH = MODELS_DIR / "test_manual_eval_log.json"
 # Config files
 MODEL_CONFIG_PATH = CONFIG_DIR / "model_config.json"
 FEATURE_PROFILES_PATH = CONFIG_DIR / "feature_profiles.json"
+
+# Streamlit demo models (18 variants) are not stored in git; the app downloads
+# them once from this GitHub Release asset when models/profiles/ is empty.
+PROFILE_MODELS_URL = (
+    "https://github.com/michallitwin/phishguard-live/releases/download/profiles-v1/profile_models.zip"
+)
