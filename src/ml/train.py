@@ -11,14 +11,9 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    f1_score,
-    roc_auc_score,
-)
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, roc_auc_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score, train_test_split
+from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
@@ -35,11 +30,11 @@ from src.config import (
 logger = logging.getLogger(__name__)
 
 
-
 RANDOM_STATE = MODEL_CONFIG["random_state"]
 FEATURE_COLUMNS = MODEL_CONFIG["feature_columns"]
 TFIDF_MAX_FEATURES = MODEL_CONFIG["tfidf"]["max_features"]
 TFIDF_NGRAM_RANGE = tuple(MODEL_CONFIG["tfidf"]["ngram_range"])
+PHISHING_THRESHOLD = MODEL_CONFIG["phishing_threshold"]
 
 
 PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
@@ -65,8 +60,8 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "kernel": ["rbf", "linear"],
     },
     "XGBoost": {
-        "n_estimators": [100,200],
-        "max_depth": [3,5,7],
+        "n_estimators": [100, 200],
+        "max_depth": [3, 5, 7],
         "learning_rate": [0.05, 0.1, 0.2],
         "reg_alpha": [0, 0.1, 1.0],
         "reg_lambda": [1.0, 5.0, 10.0],
@@ -75,14 +70,13 @@ PARAM_GRIDS: dict[str, dict[str, list[Any]]] = {
         "max_depth": [3, 5, 10, None],
         "min_samples_split": [2, 5, 10],
     },
-
 }
 
 
 def load_data(
     dataset_path: Path = DATASET_PATH,
     feature_columns: list[str] = FEATURE_COLUMNS,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, LabelEncoder]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, LabelEncoder]:
     """Loads dataset, extracts feature matrix, domains, and encodes target labels."""
     df = pd.read_csv(dataset_path)
     X = df[feature_columns].values
@@ -95,54 +89,28 @@ def load_data(
 def get_candidate_models() -> dict[str, BaseEstimator]:
     """Model factory returning fresh instances of candidate estimators."""
     return {
-        "Logistic Regression": LogisticRegression(
-            class_weight="balanced", 
-            max_iter=1000, 
-            random_state=RANDOM_STATE
-        ),
-        "Random Forest": RandomForestClassifier(
-            class_weight="balanced", 
-            random_state=RANDOM_STATE
-        ),
-        "Gradient Boosting": GradientBoostingClassifier(
-            random_state=RANDOM_STATE
-        ),
-        "SVM": SVC(
-            class_weight="balanced", 
-            probability=True, 
-            random_state=RANDOM_STATE
-        ),
-        "XGBoost": XGBClassifier(
-            eval_metric ="logloss", 
-            random_state=RANDOM_STATE
-        ),
-        "Decision Tree": DecisionTreeClassifier(
-            class_weight="balanced", 
-            random_state=RANDOM_STATE
-        ),
+        "Logistic Regression": LogisticRegression(class_weight="balanced", max_iter=1000, random_state=RANDOM_STATE),
+        "Random Forest": RandomForestClassifier(class_weight="balanced", random_state=RANDOM_STATE),
+        "Gradient Boosting": GradientBoostingClassifier(random_state=RANDOM_STATE),
+        "SVM": SVC(class_weight="balanced", probability=True, random_state=RANDOM_STATE),
+        "XGBoost": XGBClassifier(eval_metric="logloss", random_state=RANDOM_STATE),
+        "Decision Tree": DecisionTreeClassifier(class_weight="balanced", random_state=RANDOM_STATE),
     }
 
 
 def evaluate_baselines(
     X_train: np.ndarray,
-    X_test: np.ndarray,
     y_train: np.ndarray,
-    y_test: np.ndarray,
     models: dict[str, BaseEstimator] | None = None,
 ) -> dict[str, float]:
-    """Evaluates candidate models on scaled training data using F1 score."""
+    """Evaluates candidate models on training data using F1 score."""
     if models is None:
         models = get_candidate_models()
 
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
     results = {}
     for name, model in models.items():
-        model.fit(X_train_scaled, y_train)
-        y_pred = model.predict(X_test_scaled)
-        score = float(f1_score(y_test, y_pred))
+        scores = cross_val_score(model, X_train, y_train, cv=5, scoring="f1")
+        score = float(scores.mean())
         results[name] = score
         logger.info("[%s] F1(phishing) = %.4f", name, score)
 
@@ -177,23 +145,24 @@ def tune_model(
 
     return grid
 
+
 def final_evaluation(
     model: BaseEstimator,
     X_test: np.ndarray,
     y_test: np.ndarray,
-) -> None:
+) -> tuple[np.ndarray, np.ndarray]:
     """Evaluates final model on held-out test set."""
-    y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
+    y_pred = (y_proba >= PHISHING_THRESHOLD).astype(int)
 
     logger.info("--- Final Evaluation (Test Set) ---")
-    logger.info(
-        "\n%s", classification_report(y_test, y_pred, target_names=["legit", "phishing"])
-    )
+    logger.info("\n%s", classification_report(y_test, y_pred, target_names=["legit", "phishing"]))
     logger.info("ROC-AUC: %.4f", roc_auc_score(y_test, y_proba))
+    logger.info("Threshold: %.2f", PHISHING_THRESHOLD)
     logger.info("Confusion Matrix:\n%s", confusion_matrix(y_test, y_pred))
 
     return y_pred, y_proba
+
 
 def save_metrics(
     y_test: np.ndarray,
@@ -217,7 +186,7 @@ def save_metrics(
     logger.info("Metrics saved successfully to: %s", output_path)
 
 
-def save_artifacts(model, le, model_path=MODEL_PATH, encoder_path = ENCODER_PATH) -> None:
+def save_artifacts(model, le, model_path=MODEL_PATH, encoder_path=ENCODER_PATH) -> None:
     """Saves model and label encoder artifacts to disk."""
     model_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, model_path)
@@ -226,14 +195,14 @@ def save_artifacts(model, le, model_path=MODEL_PATH, encoder_path = ENCODER_PATH
 
 
 def run_pipeline(
-        dataset_path: Path = DATASET_PATH,
-        feature_columns: list[str] = FEATURE_COLUMNS,
-        model_path: Path = MODEL_PATH,
-        encoder_path: Path = ENCODER_PATH,
-        metrics_path: Path = METRICS_PATH,
-        vectorizer_path: Path = VECTORIZER_PATH,
-        use_tfidf: bool = True,
-    ) -> None:
+    dataset_path: Path = DATASET_PATH,
+    feature_columns: list[str] = FEATURE_COLUMNS,
+    model_path: Path = MODEL_PATH,
+    encoder_path: Path = ENCODER_PATH,
+    metrics_path: Path = METRICS_PATH,
+    vectorizer_path: Path = VECTORIZER_PATH,
+    use_tfidf: bool = True,
+) -> None:
     """Orchestrates data loading, benchmarking, tuning, and evaluation."""
     X, domains, y, le = load_data(dataset_path, feature_columns)
     logger.info("Classes: %s", dict(zip(le.classes_, le.transform(le.classes_), strict=False)))
@@ -241,7 +210,8 @@ def run_pipeline(
 
     # One split for features, domains and labels -> rows stay aligned.
     X_train, X_test, domains_train, domains_test, y_train, y_test = train_test_split(
-        X, domains, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+        X, domains, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
+    )
 
     if use_tfidf:
         logger.info("--- Fitting TF-IDF on character n-grams (train domains only) ---")
@@ -263,7 +233,7 @@ def run_pipeline(
         logger.info("Skipping TF-IDF")
 
     logger.info("--- Benchmarking Baseline Models ---")
-    baseline_results = evaluate_baselines(X_train, X_test, y_train, y_test)
+    baseline_results = evaluate_baselines(X_train, y_train)
 
     best_model_name = max(baseline_results, key=baseline_results.get)
     logger.info("Selected best baseline model: %s", best_model_name)

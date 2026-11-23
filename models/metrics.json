@@ -1,6 +1,6 @@
 {
-  "model_name": "Random Forest",
-  "f1_phishing": 0.8315,
-  "roc_auc": 0.9465,
-  "trained_at": "2026-11-09T17:37:25.040289+00:00"
+  "model_name": "XGBoost",
+  "f1_phishing": 0.7857,
+  "roc_auc": 0.9425,
+  "trained_at": "2026-11-23T14:56:16.422866+00:00"
 }

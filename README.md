@@ -19,10 +19,10 @@ A trained classifier with a full ML lifecycle, not a static dataset or an LLM wr
 
 | Metric | Value |
 |---|---|
-| ROC-AUC | **0.93** |
-| F1 | **0.80** |
-| Manual regression test (19 domains) | **89%** |
-| Production model | Gradient Boosting, 106 features |
+| ROC-AUC | **0.94** |
+| F1 (phishing, threshold 0.25) | **0.79** |
+| Manual regression test (19 domains) | **95% (18/19)** |
+| Production model | XGBoost, 106 features |
 
 Decision threshold is **0.25, not 0.5**: missing a phishing domain costs more than a false alarm.
 Full EDA, PCA and DBSCAN analysis: [`notebooks/eda.ipynb`](notebooks/eda.ipynb)
